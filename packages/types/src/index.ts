@@ -1,3 +1,12 @@
 // @uberskillz/types — shared TypeScript types
-// Placeholder: types will be defined in story S1-1
-export {};
+
+export type { AppSettings, Theme, ValidationError } from "./settings";
+export type {
+  FileType,
+  Skill,
+  SkillFile,
+  SkillFrontmatter,
+  SkillStatus,
+  SkillVersion,
+} from "./skill";
+export type { TestRun, TestRunStatus } from "./test-run";
