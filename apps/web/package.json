@@ -9,13 +9,16 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@uberskillz/ui": "workspace:*",
+    "@tailwindcss/postcss": "^4.2.1",
     "@uberskillz/db": "workspace:*",
     "@uberskillz/skill-engine": "workspace:*",
     "@uberskillz/types": "workspace:*",
+    "@uberskillz/ui": "workspace:*",
+    "geist": "^1.7.0",
     "next": "^15",
     "react": "^19",
-    "react-dom": "^19"
+    "react-dom": "^19",
+    "tailwindcss": "^4.2.1"
   },
   "devDependencies": {
     "@types/node": "^22",
