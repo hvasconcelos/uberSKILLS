@@ -6,6 +6,7 @@
   "types": "./src/index.ts",
   "scripts": {
     "typecheck": "tsc --noEmit",
+    "test": "vitest run",
     "db:migrate": "echo 'migrations not yet configured'"
   },
   "dependencies": {
