@@ -10,9 +10,12 @@
     "db:migrate": "echo 'migrations not yet configured'"
   },
   "dependencies": {
-    "@uberskillz/types": "workspace:*"
+    "@uberskillz/types": "workspace:*",
+    "drizzle-orm": "^0.45.1",
+    "nanoid": "^5.1.6"
   },
   "devDependencies": {
+    "drizzle-kit": "^0.31.9",
     "typescript": "^5.7"
   }
 }
