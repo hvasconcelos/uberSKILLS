@@ -32,6 +32,7 @@ import { toast } from "sonner";
 
 import { StatusBadge } from "@/components/status-badge";
 import { FilesTab } from "./files-tab";
+import { HistoryTab } from "./history-tab";
 import { InstructionsTab } from "./instructions-tab";
 import { MetadataTab } from "./metadata-tab";
 import { PreviewTab } from "./preview-tab";
@@ -343,30 +344,9 @@ export function EditorShell({ skill, files }: EditorShellProps) {
         </TabsContent>
 
         <TabsContent value="history" className="mt-6">
-          <TabPlaceholder title="History" description="Browse past versions of this skill." />
+          <HistoryTab skillId={skill.id} />
         </TabsContent>
       </Tabs>
-    </div>
-  );
-}
-
-interface TabPlaceholderProps {
-  title: string;
-  description: string;
-  fileCount?: number;
-}
-
-function TabPlaceholder({ title, description, fileCount }: TabPlaceholderProps) {
-  return (
-    <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-border p-12 text-center">
-      <h2 className="text-section-heading">{title}</h2>
-      <p className="mt-2 text-sm text-muted-foreground">{description}</p>
-      {fileCount !== undefined && (
-        <p className="mt-1 text-xs text-muted-foreground">
-          {fileCount} {fileCount === 1 ? "file" : "files"} attached
-        </p>
-      )}
-      <p className="mt-4 text-xs text-muted-foreground">Coming soon</p>
     </div>
   );
 }
