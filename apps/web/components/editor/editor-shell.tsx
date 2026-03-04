@@ -31,6 +31,7 @@ import { useCallback, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { StatusBadge } from "@/components/status-badge";
+import { InstructionsTab } from "./instructions-tab";
 import { MetadataTab } from "./metadata-tab";
 
 /** Skill data serialised for client consumption (Date fields as ISO strings). */
@@ -328,10 +329,7 @@ export function EditorShell({ skill, files }: EditorShellProps) {
         </TabsContent>
 
         <TabsContent value="instructions" className="mt-6">
-          <TabPlaceholder
-            title="Instructions"
-            description="Write the skill's instruction content in Markdown."
-          />
+          <InstructionsTab skill={skill} onSaved={() => router.refresh()} />
         </TabsContent>
 
         <TabsContent value="files" className="mt-6">
