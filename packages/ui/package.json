@@ -4,13 +4,27 @@
   "private": true,
   "main": "./src/index.ts",
   "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./globals.css": "./src/styles/globals.css"
+  },
   "scripts": {
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@uberskillz/types": "workspace:*"
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "lucide-react": "^0.511.0",
+    "tailwind-merge": "^3.3.0"
+  },
+  "peerDependencies": {
+    "react": "^19",
+    "react-dom": "^19",
+    "tailwindcss": "^4"
   },
   "devDependencies": {
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
     "typescript": "^5.7"
   }
 }
