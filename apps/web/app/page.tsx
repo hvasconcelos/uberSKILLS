@@ -1,8 +1,9 @@
 import { listSkills } from "@uberskillz/db";
-import type { SkillStatus } from "@uberskillz/types";
-import { Badge, Button, Card, CardContent } from "@uberskillz/ui";
+import { Button, Card, CardContent } from "@uberskillz/ui";
 import { ArrowRight, Library, Plus, Upload } from "lucide-react";
 import Link from "next/link";
+
+import { SkillCard } from "@/components/skill-card";
 
 // Dashboard shows live data (skill counts, recent skills) so it must not be
 // statically generated at build time.
@@ -105,29 +106,7 @@ export default function DashboardPage() {
         ) : (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {recentSkills.map((skill) => (
-              <Link key={skill.id} href={`/skills/${skill.slug}`}>
-                <Card className="h-full transition-colors hover:bg-accent/50">
-                  <CardContent className="pt-6">
-                    <div className="mb-2 flex items-start justify-between gap-2">
-                      <h3 className="font-semibold leading-tight">{skill.name}</h3>
-                      <Badge variant={skill.status as SkillStatus}>{skill.status}</Badge>
-                    </div>
-                    {skill.description && (
-                      <p className="line-clamp-2 text-sm text-muted-foreground">
-                        {skill.description}
-                      </p>
-                    )}
-                    <p className="mt-3 text-xs text-muted-foreground">
-                      Updated{" "}
-                      {new Date(skill.updatedAt).toLocaleDateString("en-US", {
-                        month: "short",
-                        day: "numeric",
-                        year: "numeric",
-                      })}
-                    </p>
-                  </CardContent>
-                </Card>
-              </Link>
+              <SkillCard key={skill.id} skill={skill} />
             ))}
           </div>
         )}
