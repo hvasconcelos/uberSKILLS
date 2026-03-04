@@ -31,10 +31,7 @@ import { useCallback, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { StatusBadge } from "@/components/status-badge";
-
-// ---------------------------------------------------------------------------
-// Types -- serialised shapes passed from the server component (Dates as ISO strings)
-// ---------------------------------------------------------------------------
+import { MetadataTab } from "./metadata-tab";
 
 /** Skill data serialised for client consumption (Date fields as ISO strings). */
 export interface EditorSkillData {
@@ -51,7 +48,6 @@ export interface EditorSkillData {
   updatedAt: string;
 }
 
-/** Skill file row serialised for client consumption. */
 export interface EditorFileData {
   id: string;
   skillId: string;
@@ -67,10 +63,6 @@ interface EditorShellProps {
   files: EditorFileData[];
 }
 
-// ---------------------------------------------------------------------------
-// Constants
-// ---------------------------------------------------------------------------
-
 const TABS = [
   { value: "metadata", label: "Metadata", icon: Settings2 },
   { value: "instructions", label: "Instructions", icon: Pencil },
@@ -83,50 +75,27 @@ type TabValue = (typeof TABS)[number]["value"];
 
 const VALID_TAB_VALUES = new Set<string>(TABS.map((t) => t.value));
 
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
-/**
- * Calls a JSON API endpoint and throws with the server error message on failure.
- * Centralises the fetch-check-parse-throw pattern used by all mutation handlers.
- */
-async function apiFetch<T>(url: string, body: Record<string, unknown>): Promise<T> {
+/** Sends a JSON request and throws with the server error message on failure. */
+async function apiFetch(
+  url: string,
+  method: "PUT" | "POST",
+  body: Record<string, unknown>,
+): Promise<Response> {
   const res = await fetch(url, {
-    method: "PUT",
+    method,
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
   });
 
   if (!res.ok) {
-    const err = (await res.json()) as { error?: string };
-    throw new Error(err.error ?? `Request failed (${res.status})`);
-  }
-
-  return res.json() as Promise<T>;
-}
-
-/**
- * POST variant of apiFetch -- used by export and deploy which use POST, not PUT.
- * Returns the raw Response so callers can choose .json() or .blob().
- */
-async function apiPost(url: string, body: Record<string, unknown>): Promise<Response> {
-  const res = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
-
-  if (!res.ok) {
-    const err = (await res.json()) as { error?: string };
-    throw new Error(err.error ?? `Request failed (${res.status})`);
+    const data = (await res.json()) as { error?: string };
+    throw new Error(data.error ?? `Request failed (${res.status})`);
   }
 
   return res;
 }
 
-/** Extracts a human-readable message from an unknown caught value. */
-function errorMessage(err: unknown, fallback: string): string {
+function toErrorMessage(err: unknown, fallback: string): string {
   return err instanceof Error ? err.message : fallback;
 }
 
@@ -142,21 +111,10 @@ function triggerDownload(blob: Blob, filename: string): void {
   URL.revokeObjectURL(url);
 }
 
-// ---------------------------------------------------------------------------
-// Component
-// ---------------------------------------------------------------------------
-
-/**
- * Skill Editor shell -- manages the tabbed interface, inline title editing,
- * status dropdown, and action buttons (Test, Export, Deploy).
- *
- * Tab panel content is placeholder for now (S4-2 through S4-6).
- */
 export function EditorShell({ skill, files }: EditorShellProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  // Derive initial tab from ?tab= query param, falling back to "metadata"
   const tabParam = searchParams.get("tab");
   const initialTab: TabValue =
     tabParam && VALID_TAB_VALUES.has(tabParam) ? (tabParam as TabValue) : "metadata";
@@ -169,15 +127,11 @@ export function EditorShell({ skill, files }: EditorShellProps) {
   const [savingStatus, setSavingStatus] = useState(false);
   const nameInputRef = useRef<HTMLInputElement>(null);
 
-  // -- Tab navigation -------------------------------------------------------
-
-  /** Syncs tab state with the URL so the active tab survives page refresh. */
   const handleTabChange = useCallback(
     (value: string) => {
       const tab = value as TabValue;
       setActiveTab(tab);
 
-      // "metadata" is the default, so we omit the param to keep the URL clean
       const params = new URLSearchParams(searchParams.toString());
       if (tab === "metadata") {
         params.delete("tab");
@@ -190,13 +144,9 @@ export function EditorShell({ skill, files }: EditorShellProps) {
     [router, searchParams, skill.id],
   );
 
-  // -- Inline name editing --------------------------------------------------
-
-  /** Persists the edited skill name, or reverts if empty / unchanged. */
   const saveSkillName = useCallback(async () => {
     const trimmed = skillName.trim();
 
-    // Nothing to save -- revert to the original server value
     if (!trimmed || trimmed === skill.name) {
       setSkillName(skill.name);
       setIsEditingName(false);
@@ -205,11 +155,11 @@ export function EditorShell({ skill, files }: EditorShellProps) {
 
     setSavingName(true);
     try {
-      await apiFetch(`/api/skills/${skill.id}`, { name: trimmed });
+      await apiFetch(`/api/skills/${skill.id}`, "PUT", { name: trimmed });
       toast.success("Skill renamed");
       router.refresh();
     } catch (err) {
-      toast.error(errorMessage(err, "Failed to rename skill"));
+      toast.error(toErrorMessage(err, "Failed to rename skill"));
       setSkillName(skill.name);
     } finally {
       setSavingName(false);
@@ -217,7 +167,6 @@ export function EditorShell({ skill, files }: EditorShellProps) {
     }
   }, [skillName, skill.name, skill.id, router]);
 
-  /** Enter confirms, Escape reverts -- standard inline-edit keyboard UX. */
   const handleNameKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLInputElement>) => {
       if (e.key === "Enter") {
@@ -231,31 +180,25 @@ export function EditorShell({ skill, files }: EditorShellProps) {
     [saveSkillName, skill.name],
   );
 
-  /** Switches to edit mode and selects all text for quick replacement. */
   const startEditingName = useCallback(() => {
     setIsEditingName(true);
-    // Wait one frame so the input is mounted before we can focus/select it
     requestAnimationFrame(() => nameInputRef.current?.select());
   }, []);
 
-  // -- Status change --------------------------------------------------------
-
-  /** Optimistically updates the status badge, reverting on API failure. */
   const handleStatusChange = useCallback(
     async (value: string) => {
       const newStatus = value as SkillStatus;
       const previousStatus = status;
 
-      // Optimistic update -- show the new badge immediately
       setStatus(newStatus);
       setSavingStatus(true);
 
       try {
-        await apiFetch(`/api/skills/${skill.id}`, { status: newStatus });
+        await apiFetch(`/api/skills/${skill.id}`, "PUT", { status: newStatus });
         toast.success(`Status changed to ${newStatus}`);
       } catch (err) {
         setStatus(previousStatus);
-        toast.error(errorMessage(err, "Failed to update status"));
+        toast.error(toErrorMessage(err, "Failed to update status"));
       } finally {
         setSavingStatus(false);
       }
@@ -263,41 +206,35 @@ export function EditorShell({ skill, files }: EditorShellProps) {
     [status, skill.id],
   );
 
-  // -- Export / Deploy ------------------------------------------------------
-
-  /** Downloads the skill as a zip archive. */
   const handleExport = useCallback(async () => {
     try {
-      const res = await apiPost("/api/export", { skillId: skill.id });
+      const res = await apiFetch("/api/export", "POST", { skillId: skill.id });
       const blob = await res.blob();
 
-      // Prefer the server-provided filename; fall back to slug-based name
       const disposition = res.headers.get("Content-Disposition");
       const filename = disposition?.match(/filename="(.+)"/)?.[1] ?? `${skill.slug}.zip`;
 
       triggerDownload(blob, filename);
       toast.success("Skill exported");
     } catch (err) {
-      toast.error(errorMessage(err, "Export failed"));
+      toast.error(toErrorMessage(err, "Export failed"));
     }
   }, [skill.id, skill.slug]);
 
-  /** Deploys the skill to ~/.claude/skills/ and updates status to "deployed". */
   const handleDeploy = useCallback(async () => {
     try {
-      const res = await apiPost("/api/export/deploy", { skillId: skill.id });
+      const res = await apiFetch("/api/export/deploy", "POST", { skillId: skill.id });
       const data = (await res.json()) as { path: string };
       toast.success(`Deployed to ${data.path}`);
       setStatus("deployed");
       router.refresh();
     } catch (err) {
-      toast.error(errorMessage(err, "Deploy failed"));
+      toast.error(toErrorMessage(err, "Deploy failed"));
     }
   }, [skill.id, router]);
 
   return (
     <div className="space-y-6">
-      {/* Back link */}
       <Button variant="ghost" size="sm" asChild className="-ml-2">
         <Link href="/skills">
           <ArrowLeft className="size-4" />
@@ -305,10 +242,8 @@ export function EditorShell({ skill, files }: EditorShellProps) {
         </Link>
       </Button>
 
-      {/* Header: editable name, status dropdown, action buttons */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">
-          {/* Inline editable skill name */}
           {isEditingName ? (
             <div className="flex items-center gap-2">
               <input
@@ -336,7 +271,6 @@ export function EditorShell({ skill, files }: EditorShellProps) {
             </button>
           )}
 
-          {/* Status dropdown */}
           <Select value={status} onValueChange={handleStatusChange} disabled={savingStatus}>
             <SelectTrigger className="w-[130px]" aria-label="Skill status">
               <SelectValue>
@@ -359,7 +293,6 @@ export function EditorShell({ skill, files }: EditorShellProps) {
           {savingStatus && <Loader2 className="size-4 animate-spin text-muted-foreground" />}
         </div>
 
-        {/* Action buttons */}
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" asChild>
             <Link href={`/skills/${skill.id}/test`}>
@@ -380,7 +313,6 @@ export function EditorShell({ skill, files }: EditorShellProps) {
 
       <Separator />
 
-      {/* Tabbed interface */}
       <Tabs value={activeTab} onValueChange={handleTabChange}>
         <TabsList variant="line" className="w-full justify-start">
           {TABS.map(({ value, label, icon: Icon }) => (
@@ -392,10 +324,7 @@ export function EditorShell({ skill, files }: EditorShellProps) {
         </TabsList>
 
         <TabsContent value="metadata" className="mt-6">
-          <TabPlaceholder
-            title="Metadata"
-            description="Edit skill name, description, trigger, tags, and model pattern."
-          />
+          <MetadataTab skill={skill} onSaved={() => router.refresh()} />
         </TabsContent>
 
         <TabsContent value="instructions" className="mt-6">
@@ -427,10 +356,6 @@ export function EditorShell({ skill, files }: EditorShellProps) {
     </div>
   );
 }
-
-// ---------------------------------------------------------------------------
-// Tab placeholder (S4-2 through S4-6 will replace these with real panels)
-// ---------------------------------------------------------------------------
 
 interface TabPlaceholderProps {
   title: string;
