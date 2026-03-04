@@ -1,3 +1,4 @@
-// @uberskillz/skill-engine — skill parsing, validation, generation
-// Placeholder: modules will be defined in stories S1-7 and S1-8
-export {};
+// @uberskillz/skill-engine -- skill parsing, validation, generation
+
+export { type ParseResult, parseSkillMd } from "./parser";
+export { type ValidationResult, validateSkill } from "./validator";

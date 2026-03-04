@@ -9,8 +9,9 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@uberskillz/db": "workspace:*",
     "@uberskillz/types": "workspace:*",
-    "@uberskillz/db": "workspace:*"
+    "yaml": "^2.8.2"
   },
   "devDependencies": {
     "typescript": "^5.7"
