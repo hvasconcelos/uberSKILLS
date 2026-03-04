@@ -2,6 +2,7 @@ import type { SkillFrontmatter, ValidationError } from "@uberskillz/types";
 
 const MAX_NAME_LENGTH = 100;
 const MAX_DESCRIPTION_LENGTH = 500;
+const MIN_CONTENT_LENGTH = 50;
 
 /** Result of validating a parsed skill. */
 export interface ValidationResult {
@@ -51,8 +52,8 @@ export function validateSkill(frontmatter: SkillFrontmatter, content: string): V
   if (isBlank(frontmatter.description)) {
     errors.push({
       field: "description",
-      message: "Description is required.",
-      severity: "error",
+      message: "A description is recommended.",
+      severity: "warning",
     });
   } else if (frontmatter.description.length > MAX_DESCRIPTION_LENGTH) {
     errors.push({
@@ -82,7 +83,14 @@ export function validateSkill(frontmatter: SkillFrontmatter, content: string): V
       message: "Content (markdown instructions) is required.",
       severity: "error",
     });
+  } else if (content.trim().length < MIN_CONTENT_LENGTH) {
+    errors.push({
+      field: "content",
+      message: `Content is very short (${content.trim().length} chars). Consider adding more detail.`,
+      severity: "warning",
+    });
   }
 
-  return { valid: errors.length === 0, errors };
+  const valid = !errors.some((e) => e.severity === "error");
+  return { valid, errors };
 }

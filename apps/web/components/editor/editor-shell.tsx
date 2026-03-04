@@ -16,6 +16,7 @@ import {
 } from "@uberskillz/ui";
 import {
   AlertCircle,
+  AlertTriangle,
   ArrowLeft,
   Check,
   Download,
@@ -35,7 +36,8 @@ import { useCallback, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { StatusBadge } from "@/components/status-badge";
-import { type SkillSnapshot, useAutoSave } from "@/hooks/use-auto-save";
+import { type SaveStatus, type SkillSnapshot, useAutoSave } from "@/hooks/use-auto-save";
+import { useValidation } from "@/hooks/use-validation";
 import { FilesTab } from "./files-tab";
 import { HistoryTab } from "./history-tab";
 import { InstructionsTab } from "./instructions-tab";
@@ -187,6 +189,15 @@ export function EditorShell({ skill, files }: EditorShellProps) {
     onSaved: () => router.refresh(),
   });
 
+  // Run validation on current working state
+  const validation = useValidation({
+    name: workingName,
+    description: workingDescription,
+    trigger: workingTrigger,
+    modelPattern: workingModelPattern,
+    content: workingContent,
+  });
+
   // Build a composite EditorSkillData from the working copy for child components
   const workingSkill: EditorSkillData = useMemo(
     () => ({
@@ -275,8 +286,14 @@ export function EditorShell({ skill, files }: EditorShellProps) {
   const handleStatusChange = useCallback(
     async (value: string) => {
       const newStatus = value as SkillStatus;
-      const previousStatus = status;
 
+      // Block setting "ready" or "deployed" when there are validation errors
+      if ((newStatus === "ready" || newStatus === "deployed") && !validation.isValid) {
+        toast.error("Cannot set status — fix validation errors first");
+        return;
+      }
+
+      const previousStatus = status;
       setStatus(newStatus);
       setSavingStatus(true);
 
@@ -290,7 +307,7 @@ export function EditorShell({ skill, files }: EditorShellProps) {
         setSavingStatus(false);
       }
     },
-    [status, skill.id],
+    [status, skill.id, validation.isValid],
   );
 
   // ------- Export / Deploy -------
@@ -382,6 +399,12 @@ export function EditorShell({ skill, files }: EditorShellProps) {
         </div>
 
         <div className="flex items-center gap-2">
+          {/* Validation summary badge */}
+          <ValidationBadge
+            errorCount={validation.errorCount}
+            warningCount={validation.warningCount}
+          />
+
           {/* Auto-save status indicator */}
           <SaveStatusIndicator status={saveStatus} isDirty={isDirty} onRetry={saveNow} />
 
@@ -423,6 +446,7 @@ export function EditorShell({ skill, files }: EditorShellProps) {
         <TabsContent value="metadata" className="mt-6">
           <MetadataTab
             skill={workingSkill}
+            validationErrors={validation.errors}
             onFieldChange={(field, value) => {
               switch (field) {
                 case "name":
@@ -454,7 +478,7 @@ export function EditorShell({ skill, files }: EditorShellProps) {
         </TabsContent>
 
         <TabsContent value="preview" className="mt-6">
-          <PreviewTab skill={workingSkill} files={files} />
+          <PreviewTab skill={workingSkill} files={files} validationErrors={validation.errors} />
         </TabsContent>
 
         <TabsContent value="history" className="mt-6">
@@ -466,10 +490,37 @@ export function EditorShell({ skill, files }: EditorShellProps) {
 }
 
 // ---------------------------------------------------------------------------
-// Save status indicator component
+// Validation badge – shows error/warning count in the editor header
 // ---------------------------------------------------------------------------
 
-import type { SaveStatus } from "@/hooks/use-auto-save";
+interface ValidationBadgeProps {
+  errorCount: number;
+  warningCount: number;
+}
+
+function ValidationBadge({ errorCount, warningCount }: ValidationBadgeProps) {
+  if (errorCount === 0 && warningCount === 0) return null;
+
+  if (errorCount > 0) {
+    return (
+      <span className="flex items-center gap-1 rounded-full bg-destructive/10 px-2.5 py-0.5 text-xs font-medium text-destructive">
+        <AlertCircle className="size-3.5" />
+        {errorCount} {errorCount === 1 ? "error" : "errors"}
+      </span>
+    );
+  }
+
+  return (
+    <span className="flex items-center gap-1 rounded-full bg-yellow-500/10 px-2.5 py-0.5 text-xs font-medium text-yellow-600 dark:text-yellow-400">
+      <AlertTriangle className="size-3.5" />
+      {warningCount} {warningCount === 1 ? "warning" : "warnings"}
+    </span>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Save status indicator component
+// ---------------------------------------------------------------------------
 
 interface SaveStatusIndicatorProps {
   status: SaveStatus;

@@ -1,5 +1,6 @@
 "use client";
 
+import type { ValidationError } from "@uberskillz/types";
 import { Input, Label, Textarea } from "@uberskillz/ui";
 import { Loader2 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -12,17 +13,11 @@ export type MetadataField = "name" | "description" | "trigger" | "tags" | "model
 
 interface MetadataTabProps {
   skill: EditorSkillData;
+  /** Validation errors from the skill-engine validator, passed down from editor-shell. */
+  validationErrors: ValidationError[];
   /** Called when a metadata field changes. The parent (editor-shell) updates its working copy
    *  and the auto-save hook takes care of persisting the change after a debounce. */
   onFieldChange: (field: MetadataField, value: string | string[] | null) => void;
-}
-
-interface FieldErrors {
-  name?: string;
-  trigger?: string;
-  slug?: string;
-  description?: string;
-  modelPattern?: string;
 }
 
 function slugify(value: string): string {
@@ -55,14 +50,23 @@ function useDebouncedCallback<T extends (...args: never[]) => void>(
   ) as T;
 }
 
-export function MetadataTab({ skill, onFieldChange }: MetadataTabProps) {
+export function MetadataTab({ skill, validationErrors, onFieldChange }: MetadataTabProps) {
   const [slug, setSlug] = useState(skill.slug);
   const [slugManuallyEdited, setSlugManuallyEdited] = useState(false);
 
-  const [errors, setErrors] = useState<FieldErrors>({});
+  const [slugError, setSlugError] = useState<string>();
   const [checkingSlug, setCheckingSlug] = useState(false);
 
   const slugCheckRef = useRef(0);
+
+  const fieldMessage = useCallback(
+    (field: string, severity: "error" | "warning"): string | undefined => {
+      const mappedField = field === "modelPattern" ? "model_pattern" : field;
+      return validationErrors.find((e) => e.field === mappedField && e.severity === severity)
+        ?.message;
+    },
+    [validationErrors],
+  );
 
   const handleNameChange = useCallback(
     (value: string) => {
@@ -98,10 +102,7 @@ export function MetadataTab({ skill, onFieldChange }: MetadataTabProps) {
       const data = (await res.json()) as { available: boolean };
 
       if (checkId === slugCheckRef.current) {
-        setErrors((prev) => ({
-          ...prev,
-          slug: data.available ? undefined : "This slug is already taken",
-        }));
+        setSlugError(data.available ? undefined : "This slug is already taken");
       }
     } catch {
       // Network errors should not block the user
@@ -118,73 +119,30 @@ export function MetadataTab({ skill, onFieldChange }: MetadataTabProps) {
     }
   }, [slug, checkSlugUniqueness]);
 
-  // Inline validation on blur
-  const validateField = useCallback(
-    (field: string) => {
-      setErrors((prev) => {
-        const next = { ...prev };
-        switch (field) {
-          case "name":
-            if (!skill.name.trim()) {
-              next.name = "Name is required";
-            } else if (skill.name.length > 100) {
-              next.name = "Name must be at most 100 characters";
-            } else {
-              next.name = undefined;
-            }
-            break;
-          case "trigger":
-            if (!skill.trigger.trim()) {
-              next.trigger = "Trigger is required";
-            } else {
-              next.trigger = undefined;
-            }
-            break;
-          case "description":
-            if (skill.description.length > 500) {
-              next.description = "Description must be at most 500 characters";
-            } else {
-              next.description = undefined;
-            }
-            break;
-          case "modelPattern":
-            if (skill.modelPattern) {
-              try {
-                new RegExp(skill.modelPattern);
-                next.modelPattern = undefined;
-              } catch {
-                next.modelPattern = "Must be a valid regular expression";
-              }
-            } else {
-              next.modelPattern = undefined;
-            }
-            break;
-        }
-        return next;
-      });
-    },
-    [skill.name, skill.trigger, skill.description, skill.modelPattern],
-  );
+  const nameError = fieldMessage("name", "error");
+  const descriptionError = fieldMessage("description", "error");
+  const descriptionWarning = fieldMessage("description", "warning");
+  const triggerError = fieldMessage("trigger", "error");
+  const modelPatternError = fieldMessage("modelPattern", "error");
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
-      <FormField label="Name" required htmlFor="metadata-name" error={errors.name}>
+      <FormField label="Name" required htmlFor="metadata-name" error={nameError}>
         <Input
           id="metadata-name"
           value={skill.name}
           onChange={(e) => handleNameChange(e.target.value)}
-          onBlur={() => validateField("name")}
           placeholder="e.g. PR Reviewer"
           maxLength={100}
-          aria-invalid={!!errors.name}
-          aria-describedby={errors.name ? "metadata-name-error" : undefined}
+          aria-invalid={!!nameError}
+          aria-describedby={nameError ? "metadata-name-error" : undefined}
         />
       </FormField>
 
       <FormField
         label="Slug"
         htmlFor="metadata-slug"
-        error={errors.slug}
+        error={slugError}
         hint="URL-safe identifier. Auto-generated from name, but you can edit it."
       >
         <div className="relative">
@@ -193,8 +151,8 @@ export function MetadataTab({ skill, onFieldChange }: MetadataTabProps) {
             value={slug}
             onChange={(e) => handleSlugChange(e.target.value)}
             placeholder="e.g. pr-reviewer"
-            aria-invalid={!!errors.slug}
-            aria-describedby={errors.slug ? "metadata-slug-error" : "metadata-slug-hint"}
+            aria-invalid={!!slugError}
+            aria-describedby={slugError ? "metadata-slug-error" : "metadata-slug-hint"}
           />
           {checkingSlug && (
             <Loader2 className="absolute right-3 top-1/2 size-4 -translate-y-1/2 animate-spin text-muted-foreground" />
@@ -202,29 +160,32 @@ export function MetadataTab({ skill, onFieldChange }: MetadataTabProps) {
         </div>
       </FormField>
 
-      <FormField label="Description" htmlFor="metadata-description" error={errors.description}>
+      <FormField
+        label="Description"
+        htmlFor="metadata-description"
+        error={descriptionError}
+        warning={descriptionWarning}
+      >
         <Textarea
           id="metadata-description"
           value={skill.description}
           onChange={(e) => onFieldChange("description", e.target.value)}
-          onBlur={() => validateField("description")}
           placeholder="A brief description of what this skill does"
           maxLength={500}
-          aria-invalid={!!errors.description}
-          aria-describedby={errors.description ? "metadata-description-error" : undefined}
+          aria-invalid={!!descriptionError}
+          aria-describedby={descriptionError ? "metadata-description-error" : undefined}
         />
         <p className="text-xs text-muted-foreground">{skill.description.length}/500 characters</p>
       </FormField>
 
-      <FormField label="Trigger" required htmlFor="metadata-trigger" error={errors.trigger}>
+      <FormField label="Trigger" required htmlFor="metadata-trigger" error={triggerError}>
         <Textarea
           id="metadata-trigger"
           value={skill.trigger}
           onChange={(e) => onFieldChange("trigger", e.target.value)}
-          onBlur={() => validateField("trigger")}
           placeholder="Describe when this skill should activate, e.g. 'When the user asks to review a pull request'"
-          aria-invalid={!!errors.trigger}
-          aria-describedby={errors.trigger ? "metadata-trigger-error" : undefined}
+          aria-invalid={!!triggerError}
+          aria-describedby={triggerError ? "metadata-trigger-error" : undefined}
         />
       </FormField>
 
@@ -239,18 +200,17 @@ export function MetadataTab({ skill, onFieldChange }: MetadataTabProps) {
       <FormField
         label="Model Pattern"
         htmlFor="metadata-model-pattern"
-        error={errors.modelPattern}
+        error={modelPatternError}
         hint="Optional regex to restrict which AI models this skill targets."
       >
         <Input
           id="metadata-model-pattern"
           value={skill.modelPattern ?? ""}
           onChange={(e) => onFieldChange("modelPattern", e.target.value || null)}
-          onBlur={() => validateField("modelPattern")}
           placeholder="e.g. claude-.*"
-          aria-invalid={!!errors.modelPattern}
+          aria-invalid={!!modelPatternError}
           aria-describedby={
-            errors.modelPattern ? "metadata-model-pattern-error" : "metadata-model-pattern-hint"
+            modelPatternError ? "metadata-model-pattern-error" : "metadata-model-pattern-hint"
           }
         />
       </FormField>
@@ -263,12 +223,14 @@ interface FormFieldProps {
   htmlFor: string;
   required?: boolean;
   error?: string;
+  warning?: string;
   hint?: string;
   children: React.ReactNode;
 }
 
-function FormField({ label, htmlFor, required, error, hint, children }: FormFieldProps) {
+function FormField({ label, htmlFor, required, error, warning, hint, children }: FormFieldProps) {
   const errorId = `${htmlFor}-error`;
+  const warningId = `${htmlFor}-warning`;
   const hintId = `${htmlFor}-hint`;
 
   return (
@@ -278,7 +240,7 @@ function FormField({ label, htmlFor, required, error, hint, children }: FormFiel
         {required && <span className="text-destructive ml-0.5">*</span>}
       </Label>
       {children}
-      {hint && !error && (
+      {hint && !error && !warning && (
         <p id={hintId} className="text-xs text-muted-foreground">
           {hint}
         </p>
@@ -286,6 +248,11 @@ function FormField({ label, htmlFor, required, error, hint, children }: FormFiel
       {error && (
         <p id={errorId} className="text-xs text-destructive" role="alert">
           {error}
+        </p>
+      )}
+      {warning && !error && (
+        <p id={warningId} className="text-xs text-yellow-600 dark:text-yellow-400">
+          {warning}
         </p>
       )}
     </div>

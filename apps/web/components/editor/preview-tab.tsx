@@ -1,7 +1,7 @@
 "use client";
 
 import { generateSkillMd } from "@uberskillz/skill-engine";
-import type { SkillFrontmatter } from "@uberskillz/types";
+import type { SkillFrontmatter, ValidationError } from "@uberskillz/types";
 import {
   Badge,
   Button,
@@ -13,7 +13,7 @@ import {
   TableHeader,
   TableRow,
 } from "@uberskillz/ui";
-import { Check, Copy, FileText } from "lucide-react";
+import { AlertCircle, AlertTriangle, Check, Copy, FileText } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
 
@@ -22,9 +22,10 @@ import type { EditorFileData, EditorSkillData } from "./editor-shell";
 interface PreviewTabProps {
   skill: EditorSkillData;
   files: EditorFileData[];
+  validationErrors: ValidationError[];
 }
 
-export function PreviewTab({ skill, files }: PreviewTabProps) {
+export function PreviewTab({ skill, files, validationErrors }: PreviewTabProps) {
   const [copied, setCopied] = useState(false);
 
   // Build frontmatter from current editor state and generate the full SKILL.md
@@ -58,6 +59,9 @@ export function PreviewTab({ skill, files }: PreviewTabProps) {
     }
   }, [rawSkillMd]);
 
+  const errors = validationErrors.filter((e) => e.severity === "error");
+  const warnings = validationErrors.filter((e) => e.severity === "warning");
+
   return (
     <div className="mx-auto max-w-2xl space-y-6">
       {/* Header with copy button */}
@@ -73,6 +77,41 @@ export function PreviewTab({ skill, files }: PreviewTabProps) {
           {copied ? "Copied" : "Copy"}
         </Button>
       </div>
+
+      {/* Validation warning banner */}
+      {errors.length > 0 && (
+        <div
+          className="flex items-start gap-3 rounded-md border border-destructive/30 bg-destructive/5 p-4"
+          role="alert"
+        >
+          <AlertCircle className="mt-0.5 size-4 shrink-0 text-destructive" />
+          <div className="space-y-1">
+            <p className="text-sm font-medium text-destructive">
+              {errors.length} validation {errors.length === 1 ? "error" : "errors"}
+            </p>
+            <ul className="list-inside list-disc text-xs text-destructive/80">
+              {errors.map((e) => (
+                <li key={`${e.field}-${e.message}`}>{e.message}</li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      )}
+      {warnings.length > 0 && errors.length === 0 && (
+        <div className="flex items-start gap-3 rounded-md border border-yellow-500/30 bg-yellow-500/5 p-4">
+          <AlertTriangle className="mt-0.5 size-4 shrink-0 text-yellow-600 dark:text-yellow-400" />
+          <div className="space-y-1">
+            <p className="text-sm font-medium text-yellow-600 dark:text-yellow-400">
+              {warnings.length} {warnings.length === 1 ? "warning" : "warnings"}
+            </p>
+            <ul className="list-inside list-disc text-xs text-yellow-600/80 dark:text-yellow-400/80">
+              {warnings.map((e) => (
+                <li key={`${e.field}-${e.message}`}>{e.message}</li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      )}
 
       {/* YAML frontmatter block -- monospace, code-style rendering */}
       <div className="rounded-md border border-border bg-muted/50">

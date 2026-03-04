@@ -8,7 +8,8 @@ const validFrontmatter: SkillFrontmatter = {
   trigger: "When the user asks for help",
 };
 
-const validContent = "# Instructions\n\nDo something useful.";
+const validContent =
+  "# Instructions\n\nDo something useful. This content is long enough to pass the minimum length check.";
 
 describe("validateSkill", () => {
   it("passes for a valid skill", () => {
@@ -67,13 +68,14 @@ describe("validateSkill", () => {
 
   // --- description validation ---
 
-  it("fails when description is missing", () => {
+  it("warns when description is empty", () => {
     const fm: SkillFrontmatter = { ...validFrontmatter, description: "" };
     const result = validateSkill(fm, validContent);
 
-    expect(result.valid).toBe(false);
+    // Empty description is a warning, not an error — skill is still valid
+    expect(result.valid).toBe(true);
     expect(result.errors).toContainEqual(
-      expect.objectContaining({ field: "description", severity: "error" }),
+      expect.objectContaining({ field: "description", severity: "warning" }),
     );
   });
 
@@ -165,7 +167,7 @@ describe("validateSkill", () => {
 
   // --- multiple errors ---
 
-  it("collects multiple errors at once", () => {
+  it("collects multiple errors and warnings at once", () => {
     const fm: SkillFrontmatter = {
       name: "",
       description: "",
@@ -175,16 +177,47 @@ describe("validateSkill", () => {
     const result = validateSkill(fm, "");
 
     expect(result.valid).toBe(false);
-    // name, description, trigger, model_pattern, content = 5 errors
+    // name(error), description(warning), trigger(error), model_pattern(error), content(error)
     expect(result.errors.length).toBeGreaterThanOrEqual(5);
   });
 
-  it("all required-field errors have severity 'error'", () => {
-    const fm: SkillFrontmatter = { name: "", description: "", trigger: "" };
+  it("required-field errors have severity 'error'", () => {
+    const fm: SkillFrontmatter = { name: "", description: "Has a description", trigger: "" };
     const result = validateSkill(fm, "");
 
     for (const err of result.errors) {
       expect(err.severity).toBe("error");
     }
+  });
+
+  // --- warning rules ---
+
+  it("warns when content is very short", () => {
+    const fm: SkillFrontmatter = { ...validFrontmatter };
+    const result = validateSkill(fm, "Short.");
+
+    // Short content is a warning, skill is still valid
+    expect(result.valid).toBe(true);
+    expect(result.errors).toContainEqual(
+      expect.objectContaining({ field: "content", severity: "warning" }),
+    );
+  });
+
+  it("does not warn when content meets minimum length", () => {
+    const fm: SkillFrontmatter = { ...validFrontmatter };
+    const result = validateSkill(fm, "A".repeat(50));
+
+    expect(result.valid).toBe(true);
+    expect(result.errors).toHaveLength(0);
+  });
+
+  it("warnings do not affect validity", () => {
+    // Only warnings: empty description + short content
+    const fm: SkillFrontmatter = { ...validFrontmatter, description: "" };
+    const result = validateSkill(fm, "Short.");
+
+    expect(result.valid).toBe(true);
+    const warnings = result.errors.filter((e) => e.severity === "warning");
+    expect(warnings.length).toBe(2);
   });
 });

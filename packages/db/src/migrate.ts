@@ -1,11 +1,6 @@
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import {
-  DEFAULT_DATABASE_URL,
-  isBunRuntime,
-  openSqliteDb,
-  resolveFileUrl,
-} from "./sqlite-utils";
+import { DEFAULT_DATABASE_URL, isBunRuntime, openSqliteDb, resolveFileUrl } from "./sqlite-utils";
 
 /**
  * Path to the generated Drizzle migration files (resolved from this module's directory).
