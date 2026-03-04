@@ -9,6 +9,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 export const metadata: Metadata = {
   title: "UberSkillz",
   description: "Design, test, and deploy Claude Code Agent Skills",
+  manifest: "/manifest.json",
 };
 
 export const viewport: Viewport = {

@@ -4,6 +4,8 @@ import { useCallback, useRef, useState } from "react";
 
 import type { TestRunStream, TestSkillData } from "@/components/test/test-config-panel";
 import { TestConfigPanel } from "@/components/test/test-config-panel";
+import type { TestMetricsData } from "@/components/test/test-metrics";
+import { TestResponsePanel } from "@/components/test/test-response-panel";
 
 interface TestPageClientProps {
   skill: TestSkillData;
@@ -11,51 +13,94 @@ interface TestPageClientProps {
   hasApiKey: boolean;
 }
 
-/**
- * Client wrapper for the skill testing page.
- *
- * Renders a two-panel layout:
- * - Left: configuration panel (model, arguments, user message, run button)
- * - Right: response panel placeholder (to be implemented in S5-6)
- *
- * Manages the streaming state shared between the config and response panels.
- */
+interface TestRunResponse {
+  status: "running" | "completed" | "error";
+  promptTokens: number | null;
+  completionTokens: number | null;
+  totalTokens: number | null;
+  latencyMs: number | null;
+  ttftMs: number | null;
+  error: string | null;
+}
+
 export function TestPageClient({ skill, defaultModel, hasApiKey }: TestPageClientProps) {
   const [isRunning, setIsRunning] = useState(false);
   const [streamedText, setStreamedText] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [metrics, setMetrics] = useState<TestMetricsData | null>(null);
 
-  // Holds the active stream reader so a future "stop" button can cancel it.
+  const testRunIdRef = useRef<string | null>(null);
   const readerRef = useRef<ReadableStreamDefaultReader<Uint8Array> | null>(null);
 
-  /** Consumes the streaming response body chunk-by-chunk and appends decoded text. */
-  const handleTestStart = useCallback(async (stream: TestRunStream) => {
-    setIsRunning(true);
-    setStreamedText("");
-    setError(null);
-    readerRef.current = stream.reader;
+  // Retries up to 3 times since the server's onFinish callback may lag behind the stream ending.
+  const fetchMetrics = useCallback(async (testRunId: string) => {
+    const MAX_RETRIES = 3;
+    const RETRY_DELAY_MS = 500;
 
-    const decoder = new TextDecoder();
+    for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+      try {
+        const res = await fetch(`/api/test/${testRunId}`);
+        if (!res.ok) return;
 
-    try {
-      // Read chunks until the stream signals completion
-      while (true) {
-        const { done, value } = await stream.reader.read();
-        if (done) break;
-        setStreamedText((prev) => prev + decoder.decode(value, { stream: true }));
+        const data = (await res.json()) as TestRunResponse;
+
+        if (data.status === "running" && attempt < MAX_RETRIES - 1) {
+          await new Promise((r) => setTimeout(r, RETRY_DELAY_MS));
+          continue;
+        }
+
+        if (data.status === "error" && data.error) {
+          setError(data.error);
+        }
+
+        setMetrics({
+          promptTokens: data.promptTokens,
+          completionTokens: data.completionTokens,
+          totalTokens: data.totalTokens,
+          latencyMs: data.latencyMs,
+          ttftMs: data.ttftMs,
+        });
+        return;
+      } catch {
+        return;
       }
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "Stream interrupted";
-      setError(message);
-    } finally {
-      setIsRunning(false);
-      readerRef.current = null;
     }
   }, []);
 
+  const handleTestStart = useCallback(
+    async (stream: TestRunStream) => {
+      setIsRunning(true);
+      setStreamedText("");
+      setError(null);
+      setMetrics(null);
+      testRunIdRef.current = stream.testRunId;
+      readerRef.current = stream.reader;
+
+      const decoder = new TextDecoder();
+
+      try {
+        while (true) {
+          const { done, value } = await stream.reader.read();
+          if (done) break;
+          setStreamedText((prev) => prev + decoder.decode(value, { stream: true }));
+        }
+      } catch (err) {
+        const message = err instanceof Error ? err.message : "Stream interrupted";
+        setError(message);
+      } finally {
+        setIsRunning(false);
+        readerRef.current = null;
+
+        if (testRunIdRef.current) {
+          fetchMetrics(testRunIdRef.current);
+        }
+      }
+    },
+    [fetchMetrics],
+  );
+
   return (
-    <div className="flex h-[calc(100vh-8rem)] gap-0 overflow-hidden rounded-lg border border-border">
-      {/* Left panel: configuration */}
+    <div className="flex h-[calc(100vh-8rem)] overflow-hidden rounded-lg border border-border">
       <div className="w-1/2 shrink-0 border-r border-border">
         <TestConfigPanel
           skill={skill}
@@ -66,55 +111,14 @@ export function TestPageClient({ skill, defaultModel, hasApiKey }: TestPageClien
         />
       </div>
 
-      {/* Right panel: response (placeholder for S5-6) */}
-      <div className="flex w-1/2 flex-col overflow-y-auto p-5">
-        <ResponsePanel streamedText={streamedText} error={error} isRunning={isRunning} />
+      <div className="flex w-1/2 flex-col overflow-hidden p-5">
+        <TestResponsePanel
+          streamedText={streamedText}
+          isRunning={isRunning}
+          error={error}
+          metrics={metrics}
+        />
       </div>
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Response panel -- shows streamed output, error, or empty state
-// ---------------------------------------------------------------------------
-
-interface ResponsePanelProps {
-  streamedText: string;
-  error: string | null;
-  isRunning: boolean;
-}
-
-function ResponsePanel({ streamedText, error, isRunning }: ResponsePanelProps): React.ReactNode {
-  if (error) {
-    return (
-      <div
-        className="flex items-center gap-2 rounded-lg border px-4 py-3 text-sm"
-        style={{
-          borderColor: "var(--status-error-text)",
-          color: "var(--status-error-text)",
-        }}
-        role="alert"
-      >
-        {error}
-      </div>
-    );
-  }
-
-  if (streamedText) {
-    return (
-      <div className="font-mono text-sm leading-relaxed whitespace-pre-wrap">
-        {streamedText}
-        {isRunning && <span className="inline-block h-4 w-1.5 animate-pulse bg-foreground" />}
-      </div>
-    );
-  }
-
-  return (
-    <div className="flex h-full flex-col items-center justify-center text-center text-muted-foreground">
-      <p className="text-sm">Run a test to see results</p>
-      <p className="mt-1 text-xs">
-        Configure the parameters on the left and click &quot;Run Test&quot;.
-      </p>
     </div>
   );
 }
