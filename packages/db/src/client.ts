@@ -1,11 +1,9 @@
 import { Database } from "bun:sqlite";
-import { existsSync, mkdirSync } from "node:fs";
-import { dirname, resolve } from "node:path";
 import { drizzle } from "drizzle-orm/bun-sqlite";
 import { drizzle as drizzleLibsql } from "drizzle-orm/libsql";
+import { runMigrations } from "./migrate";
 import * as schema from "./schema";
-
-const DEFAULT_DATABASE_URL = "file:data/uberskillz.db";
+import { DEFAULT_DATABASE_URL, resolveFileUrl } from "./sqlite-utils";
 
 type DbInstance = ReturnType<typeof drizzle<typeof schema>>;
 
@@ -14,9 +12,12 @@ let cachedDb: DbInstance | null = null;
 /**
  * Returns a Drizzle ORM database instance, creating one if needed (singleton).
  *
+ * On first call, auto-runs pending Drizzle migrations so the database is
+ * always up-to-date without requiring a manual migration step.
+ *
  * Connection type is auto-detected from `DATABASE_URL`:
- * - `file:` prefix → local SQLite via bun:sqlite
- * - `libsql://` prefix → remote Turso via @libsql/client
+ * - `file:` prefix → local SQLite via bun:sqlite (migrations auto-applied)
+ * - `libsql://` prefix → remote Turso via @libsql/client (migrations skipped)
  */
 export function getDb(): DbInstance {
   if (cachedDb) {
@@ -24,6 +25,8 @@ export function getDb(): DbInstance {
   }
 
   const url = process.env.DATABASE_URL ?? DEFAULT_DATABASE_URL;
+
+  runMigrations(url);
 
   if (url.startsWith("libsql://")) {
     cachedDb = createLibsqlClient(url);
@@ -43,21 +46,9 @@ export function getDb(): DbInstance {
  * Auto-creates the parent directory for the database file if it doesn't exist.
  */
 function createSqliteClient(url: string): DbInstance {
-  // Strip "file:" prefix to get the filesystem path
-  const relativePath = url.slice("file:".length);
-  const absolutePath = resolve(process.cwd(), relativePath);
-
-  // Ensure the directory exists
-  const dir = dirname(absolutePath);
-  if (!existsSync(dir)) {
-    mkdirSync(dir, { recursive: true });
-  }
-
+  const absolutePath = resolveFileUrl(url);
   const sqlite = new Database(absolutePath);
-
-  // Enable WAL mode for better concurrent read performance
   sqlite.exec("PRAGMA journal_mode = WAL;");
-
   return drizzle(sqlite, { schema }) as unknown as DbInstance;
 }
 
@@ -65,7 +56,6 @@ function createSqliteClient(url: string): DbInstance {
  * Creates a remote Turso connection via @libsql/client.
  */
 function createLibsqlClient(url: string): DbInstance {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const { createClient } = require("@libsql/client") as typeof import("@libsql/client");
 
   const client = createClient({
@@ -78,7 +68,7 @@ function createLibsqlClient(url: string): DbInstance {
 
 /**
  * Resets the cached database instance.
- * Intended for testing only — allows tests to create fresh connections.
+ * Intended for testing only -- allows tests to create fresh connections.
  */
 export function resetDbForTesting(): void {
   cachedDb = null;
