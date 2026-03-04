@@ -20,7 +20,6 @@ import {
   SettingsIcon,
   UploadIcon,
 } from "lucide-react";
-import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -38,25 +37,11 @@ export function AppSidebar() {
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader>
-        <Link href="/" className="flex items-center gap-2 px-2 py-1">
-          {isCollapsed ? (
-            <Image
-              src="/icon-192.png"
-              alt="UberSkillz"
-              width={24}
-              height={24}
-              className="dark:invert"
-            />
-          ) : (
-            <Image
-              src="/logo.png"
-              alt="UberSkillz"
-              width={130}
-              height={32}
-              priority
-              className="dark:invert"
-            />
-          )}
+        <Link href="/" className="flex flex-col items-center gap-0.5 px-2 py-1">
+          <span className="truncate text-xl font-bold tracking-tight">
+            {isCollapsed ? "U" : "UberSkillz"}
+          </span>
+          {!isCollapsed && <span className="text-sm text-muted-foreground">v0.0.0</span>}
         </Link>
       </SidebarHeader>
 
