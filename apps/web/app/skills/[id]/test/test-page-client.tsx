@@ -4,6 +4,8 @@ import { useCallback, useRef, useState } from "react";
 
 import type { TestRunStream, TestSkillData } from "@/components/test/test-config-panel";
 import { TestConfigPanel } from "@/components/test/test-config-panel";
+import type { HistorySelection } from "@/components/test/test-history";
+import { TestHistory } from "@/components/test/test-history";
 import type { TestMetricsData } from "@/components/test/test-metrics";
 import { TestResponsePanel } from "@/components/test/test-response-panel";
 
@@ -28,6 +30,8 @@ export function TestPageClient({ skill, defaultModel, hasApiKey }: TestPageClien
   const [streamedText, setStreamedText] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [metrics, setMetrics] = useState<TestMetricsData | null>(null);
+  // Incremented after each test completes to trigger a history table refresh
+  const [historyRefreshKey, setHistoryRefreshKey] = useState(0);
 
   const testRunIdRef = useRef<string | null>(null);
   const readerRef = useRef<ReadableStreamDefaultReader<Uint8Array> | null>(null);
@@ -92,33 +96,53 @@ export function TestPageClient({ skill, defaultModel, hasApiKey }: TestPageClien
         readerRef.current = null;
 
         if (testRunIdRef.current) {
-          fetchMetrics(testRunIdRef.current);
+          await fetchMetrics(testRunIdRef.current);
         }
+
+        // Trigger history table refresh after metrics are fetched
+        setHistoryRefreshKey((k) => k + 1);
       }
     },
     [fetchMetrics],
   );
 
+  // Load a historical test run's response into the response panel
+  const handleSelectHistoryRun = useCallback((selection: HistorySelection) => {
+    setStreamedText(selection.text);
+    setError(selection.error);
+    setMetrics(selection.metrics);
+  }, []);
+
   return (
-    <div className="flex h-[calc(100vh-8rem)] overflow-hidden rounded-lg border border-border">
-      <div className="w-1/2 shrink-0 border-r border-border">
-        <TestConfigPanel
-          skill={skill}
-          defaultModel={defaultModel}
-          hasApiKey={hasApiKey}
-          onTestStart={handleTestStart}
-          isRunning={isRunning}
-        />
+    <div className="flex flex-col gap-6">
+      {/* Main two-panel layout */}
+      <div className="flex h-[calc(100vh-14rem)] overflow-hidden rounded-lg border border-border">
+        <div className="w-1/2 shrink-0 border-r border-border">
+          <TestConfigPanel
+            skill={skill}
+            defaultModel={defaultModel}
+            hasApiKey={hasApiKey}
+            onTestStart={handleTestStart}
+            isRunning={isRunning}
+          />
+        </div>
+
+        <div className="flex w-1/2 flex-col overflow-hidden p-5">
+          <TestResponsePanel
+            streamedText={streamedText}
+            isRunning={isRunning}
+            error={error}
+            metrics={metrics}
+          />
+        </div>
       </div>
 
-      <div className="flex w-1/2 flex-col overflow-hidden p-5">
-        <TestResponsePanel
-          streamedText={streamedText}
-          isRunning={isRunning}
-          error={error}
-          metrics={metrics}
-        />
-      </div>
+      {/* Test history table */}
+      <TestHistory
+        skillId={skill.id}
+        refreshKey={historyRefreshKey}
+        onSelectRun={handleSelectHistoryRun}
+      />
     </div>
   );
 }
