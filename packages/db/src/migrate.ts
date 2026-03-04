@@ -2,7 +2,7 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
   DEFAULT_DATABASE_URL,
-  getMigratorPath,
+  isBunRuntime,
   openSqliteDb,
   resolveFileUrl,
 } from "./sqlite-utils";
@@ -32,8 +32,13 @@ export function runMigrations(databaseUrl?: string): void {
   const absolutePath = resolveFileUrl(url);
   const { db, close } = openSqliteDb(absolutePath);
 
-  const { migrate } = require(getMigratorPath());
-  migrate(db, { migrationsFolder: MIGRATIONS_FOLDER });
+  if (isBunRuntime()) {
+    const { migrate } = require("drizzle-orm/bun-sqlite/migrator");
+    migrate(db, { migrationsFolder: MIGRATIONS_FOLDER });
+  } else {
+    const { migrate } = require("drizzle-orm/better-sqlite3/migrator");
+    migrate(db, { migrationsFolder: MIGRATIONS_FOLDER });
+  }
 
   close();
 }

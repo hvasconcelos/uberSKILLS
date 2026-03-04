@@ -31,6 +31,7 @@ import { useCallback, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { StatusBadge } from "@/components/status-badge";
+import { FilesTab } from "./files-tab";
 import { InstructionsTab } from "./instructions-tab";
 import { MetadataTab } from "./metadata-tab";
 
@@ -333,11 +334,7 @@ export function EditorShell({ skill, files }: EditorShellProps) {
         </TabsContent>
 
         <TabsContent value="files" className="mt-6">
-          <TabPlaceholder
-            title="Files"
-            description="Manage additional prompt and resource files."
-            fileCount={files.length}
-          />
+          <FilesTab skillId={skill.id} files={files} onChanged={() => router.refresh()} />
         </TabsContent>
 
         <TabsContent value="preview" className="mt-6">
