@@ -3,7 +3,7 @@ import { GeistSans } from "geist/font/sans";
 import type { Metadata, Viewport } from "next";
 import "@/styles/globals.css";
 import { Toaster } from "@uberskillz/ui";
-import { NavBar } from "@/components/nav-bar";
+import { AppLayout } from "@/components/app-layout";
 import { ThemeProvider } from "@/components/theme-provider";
 
 export const metadata: Metadata = {
@@ -26,8 +26,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     >
       <body className="min-h-screen bg-background font-sans antialiased">
         <ThemeProvider>
-          <NavBar />
-          <main className="mx-auto max-w-6xl px-6 py-8">{children}</main>
+          <AppLayout>{children}</AppLayout>
           <Toaster />
         </ThemeProvider>
       </body>
