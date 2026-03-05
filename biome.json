@@ -10,7 +10,8 @@
       "!**/.turbo",
       "!**/bun.lock",
       "!**/playwright-report",
-      "!**/test-results"
+      "!**/test-results",
+      "!**/coverage"
     ]
   },
   "formatter": {

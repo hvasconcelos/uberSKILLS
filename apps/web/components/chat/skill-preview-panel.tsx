@@ -2,11 +2,11 @@
 
 import { parseSkillMd, validateSkill } from "@uberskills/skill-engine";
 import type { Skill, ValidationError } from "@uberskills/types";
-import { Button } from "@uberskills/ui";
+import { Button, Input } from "@uberskills/ui";
 import type { UIMessage } from "ai";
 import { AlertCircle, AlertTriangle, Check, Copy, Loader2, RefreshCw, Save } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 interface SkillPreviewPanelProps {
@@ -26,6 +26,7 @@ export function SkillPreviewPanel({ messages, isStreaming, onRegenerate }: Skill
   const router = useRouter();
   const [isSaving, setIsSaving] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [nameOverride, setNameOverride] = useState("");
 
   const lastAssistantText = useMemo(() => {
     const lastAssistant = [...messages].reverse().find((m) => m.role === "assistant");
@@ -37,8 +38,19 @@ export function SkillPreviewPanel({ messages, isStreaming, onRegenerate }: Skill
       .join("");
   }, [messages]);
 
+  /** Extract SKILL.md content from markdown code blocks if present. */
+  const skillMdText = useMemo(() => {
+    if (!lastAssistantText) return "";
+    // Match ```md, ```markdown, or plain ``` code blocks containing frontmatter
+    const codeBlockMatch = /```(?:md|markdown)?\s*\n(---[\s\S]*?---[\s\S]*?)```/.exec(
+      lastAssistantText,
+    );
+    if (codeBlockMatch?.[1]) return codeBlockMatch[1].trim();
+    return lastAssistantText;
+  }, [lastAssistantText]);
+
   const { frontmatter, content, errors, hasFrontmatter } = useMemo(() => {
-    if (!lastAssistantText) {
+    if (!skillMdText) {
       return {
         frontmatter: { name: "", description: "", trigger: "" },
         content: "",
@@ -47,7 +59,7 @@ export function SkillPreviewPanel({ messages, isStreaming, onRegenerate }: Skill
       };
     }
 
-    const parsed = parseSkillMd(lastAssistantText);
+    const parsed = parseSkillMd(skillMdText);
     const validation = validateSkill(parsed.frontmatter, parsed.content);
     // Consider frontmatter detected if parser extracted a non-empty name
     const detected = parsed.frontmatter.name.length > 0;
@@ -58,22 +70,29 @@ export function SkillPreviewPanel({ messages, isStreaming, onRegenerate }: Skill
       errors: validation.errors,
       hasFrontmatter: detected,
     };
-  }, [lastAssistantText]);
+  }, [skillMdText]);
+
+  // Auto-fill name from parsed frontmatter when it changes
+  useEffect(() => {
+    if (frontmatter.name) {
+      setNameOverride(frontmatter.name);
+    }
+  }, [frontmatter.name]);
 
   const validationErrors = errors.filter((e) => e.severity === "error");
   const validationWarnings = errors.filter((e) => e.severity === "warning");
-  const canSave = hasFrontmatter && !isStreaming;
+  const canSave = nameOverride.trim().length > 0 && hasFrontmatter && !isStreaming;
 
   const handleCopy = useCallback(async () => {
     try {
-      await navigator.clipboard.writeText(lastAssistantText);
+      await navigator.clipboard.writeText(skillMdText);
       setCopied(true);
       toast.success("Copied to clipboard");
       setTimeout(() => setCopied(false), 2000);
     } catch {
       toast.error("Failed to copy to clipboard");
     }
-  }, [lastAssistantText]);
+  }, [skillMdText]);
 
   const handleSave = useCallback(async () => {
     setIsSaving(true);
@@ -82,7 +101,7 @@ export function SkillPreviewPanel({ messages, isStreaming, onRegenerate }: Skill
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          name: frontmatter.name,
+          name: nameOverride.trim() || frontmatter.name,
           description: frontmatter.description,
           trigger: frontmatter.trigger,
           modelPattern: frontmatter.model_pattern ?? null,
@@ -105,7 +124,7 @@ export function SkillPreviewPanel({ messages, isStreaming, onRegenerate }: Skill
     } finally {
       setIsSaving(false);
     }
-  }, [frontmatter, content, router]);
+  }, [frontmatter, content, nameOverride, router]);
 
   if (!lastAssistantText) {
     return (
@@ -158,6 +177,32 @@ export function SkillPreviewPanel({ messages, isStreaming, onRegenerate }: Skill
       {/* Scrollable preview content */}
       <div className="flex-1 overflow-y-auto p-4">
         <div className="space-y-4">
+          {/* Skill name input */}
+          {lastAssistantText && (
+            <div className="space-y-1.5">
+              <label htmlFor="skill-name" className="text-xs font-medium text-muted-foreground">
+                Skill Name
+              </label>
+              <Input
+                id="skill-name"
+                value={nameOverride}
+                onChange={(e) => setNameOverride(e.target.value)}
+                placeholder="Enter a name for this skill..."
+                disabled={isStreaming}
+              />
+            </div>
+          )}
+
+          {/* Skill detected indicator */}
+          {hasFrontmatter && !isStreaming && validationErrors.length === 0 && (
+            <div className="flex items-center gap-2 rounded-md border border-green-500/30 bg-green-500/5 p-3">
+              <Check className="size-4 text-green-600 dark:text-green-400" />
+              <span className="text-xs font-medium text-green-600 dark:text-green-400">
+                Valid skill detected — ready to save
+              </span>
+            </div>
+          )}
+
           {/* Validation errors */}
           {validationErrors.length > 0 && !isStreaming && (
             <div
@@ -224,7 +269,7 @@ export function SkillPreviewPanel({ messages, isStreaming, onRegenerate }: Skill
                 <span>Could not parse SKILL.md frontmatter. Showing raw output.</span>
               </div>
               <pre className="whitespace-pre-wrap break-words rounded-md border border-border bg-muted/50 p-3 font-mono text-xs leading-relaxed">
-                {lastAssistantText}
+                {skillMdText}
               </pre>
             </div>
           )}
