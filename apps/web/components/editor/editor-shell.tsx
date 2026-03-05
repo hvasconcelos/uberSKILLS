@@ -324,6 +324,7 @@ export function EditorShell({ skill, files }: EditorShellProps) {
 
   // ------- Export / Deploy -------
   const handleExport = useCallback(async () => {
+    setExporting(true);
     try {
       const res = await apiFetch("/api/export", "POST", { skillId: skill.id });
       const blob = await res.blob();
@@ -335,10 +336,13 @@ export function EditorShell({ skill, files }: EditorShellProps) {
       toast.success("Skill exported");
     } catch (err) {
       toast.error(toErrorMessage(err, "Export failed"));
+    } finally {
+      setExporting(false);
     }
   }, [skill.id, skill.slug]);
 
-  const handleDeploy = useCallback(async () => {
+  const handleDeployConfirm = useCallback(async () => {
+    setDeploying(true);
     try {
       const res = await apiFetch("/api/export/deploy", "POST", { skillId: skill.id });
       const data = (await res.json()) as { path: string };
@@ -347,8 +351,18 @@ export function EditorShell({ skill, files }: EditorShellProps) {
       router.refresh();
     } catch (err) {
       toast.error(toErrorMessage(err, "Deploy failed"));
+    } finally {
+      setDeploying(false);
+      setShowDeployDialog(false);
     }
   }, [skill.id, router]);
+
+  // ------- Export / Deploy loading & confirmation state -------
+  const [exporting, setExporting] = useState(false);
+  const [deploying, setDeploying] = useState(false);
+  const [showDeployDialog, setShowDeployDialog] = useState(false);
+
+  const hasValidationErrors = validation.errorCount > 0;
 
   // ------- Delete skill -------
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -453,12 +467,30 @@ export function EditorShell({ skill, files }: EditorShellProps) {
               Test
             </Link>
           </Button>
-          <Button variant="outline" size="sm" onClick={handleExport}>
-            <Download className="size-4" />
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleExport}
+            disabled={hasValidationErrors || exporting}
+          >
+            {exporting ? (
+              <Loader2 className="size-4 animate-spin" />
+            ) : (
+              <Download className="size-4" />
+            )}
             Export
           </Button>
-          <Button variant="outline" size="sm" onClick={handleDeploy}>
-            <Rocket className="size-4" />
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowDeployDialog(true)}
+            disabled={hasValidationErrors || deploying}
+          >
+            {deploying ? (
+              <Loader2 className="size-4 animate-spin" />
+            ) : (
+              <Rocket className="size-4" />
+            )}
             Deploy
           </Button>
 
@@ -532,6 +564,35 @@ export function EditorShell({ skill, files }: EditorShellProps) {
           <HistoryTab skillId={skill.id} />
         </TabsContent>
       </Tabs>
+
+      {/* Deploy confirmation dialog */}
+      <Dialog
+        open={showDeployDialog}
+        onOpenChange={(open) => !open && !deploying && setShowDeployDialog(false)}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Deploy {workingName}?</DialogTitle>
+            <DialogDescription>
+              Deploy to ~/.claude/skills/{skill.slug}/? This will overwrite any existing files in
+              that directory.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowDeployDialog(false)}
+              disabled={deploying}
+            >
+              Cancel
+            </Button>
+            <Button onClick={handleDeployConfirm} disabled={deploying}>
+              {deploying && <Loader2 className="size-4 animate-spin" />}
+              Deploy
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Delete confirmation dialog */}
       <Dialog open={showDeleteDialog} onOpenChange={(open) => !open && setShowDeleteDialog(false)}>
