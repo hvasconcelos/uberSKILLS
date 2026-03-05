@@ -77,7 +77,7 @@ export function SkillListView({ skills }: SkillListViewProps) {
                   {skill.name}
                 </Link>
               </TableCell>
-              <TableCell className="hidden max-w-xs text-muted-foreground sm:table-cell">
+              <TableCell className="hidden max-w-xs truncate text-muted-foreground sm:table-cell">
                 <Link href={`/skills/${skill.slug}`} className="block" tabIndex={-1}>
                   {truncatedDescription || <span className="italic">No description</span>}
                 </Link>
