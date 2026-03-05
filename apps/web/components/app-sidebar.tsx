@@ -71,7 +71,7 @@ export function AppSidebar() {
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader>
-        <Link href="/" className="flex flex-col items-center gap-0.5 px-2 py-3">
+        <Link href="/" className="flex flex-col items-start gap-0.5 px-2 py-3">
           <span className="truncate text-xl font-bold tracking-tight">
             {isCollapsed ? "U" : "UberSkills"}
           </span>
