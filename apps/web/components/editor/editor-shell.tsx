@@ -512,8 +512,8 @@ export function EditorShell({ skill, files }: EditorShellProps) {
 
       <Separator />
 
-      <Tabs value={activeTab} onValueChange={handleTabChange}>
-        <TabsList variant="line" className="w-full justify-start">
+      <Tabs value={activeTab} onValueChange={handleTabChange} orientation="vertical">
+        <TabsList variant="line" className="sticky top-6 w-48 shrink-0 self-start">
           {TABS.map(({ value, label, icon: Icon }) => (
             <TabsTrigger key={value} value={value} className="gap-1.5">
               <Icon className="size-4" />
@@ -522,7 +522,7 @@ export function EditorShell({ skill, files }: EditorShellProps) {
           ))}
         </TabsList>
 
-        <TabsContent value="metadata" className="mt-6">
+        <TabsContent value="metadata" className="min-w-0">
           <MetadataTab
             skill={workingSkill}
             validationErrors={validation.errors}
@@ -548,19 +548,19 @@ export function EditorShell({ skill, files }: EditorShellProps) {
           />
         </TabsContent>
 
-        <TabsContent value="instructions" className="mt-6">
+        <TabsContent value="instructions" className="min-w-0">
           <InstructionsTab skill={workingSkill} onContentChange={setWorkingContent} />
         </TabsContent>
 
-        <TabsContent value="files" className="mt-6">
+        <TabsContent value="files" className="min-w-0">
           <FilesTab skillId={skill.id} files={files} onChanged={() => router.refresh()} />
         </TabsContent>
 
-        <TabsContent value="preview" className="mt-6">
+        <TabsContent value="preview" className="min-w-0">
           <PreviewTab skill={workingSkill} files={files} validationErrors={validation.errors} />
         </TabsContent>
 
-        <TabsContent value="history" className="mt-6">
+        <TabsContent value="history" className="min-w-0">
           <HistoryTab skillId={skill.id} />
         </TabsContent>
       </Tabs>
