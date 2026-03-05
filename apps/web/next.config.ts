@@ -13,7 +13,13 @@ const nextConfig: NextConfig = {
     "@uberskills/skill-engine",
     "@uberskills/types",
   ],
-  serverExternalPackages: ["@libsql/client", "@libsql/hrana-client", "better-sqlite3", "libsql"],
+  serverExternalPackages: [
+    "@libsql/client",
+    "@libsql/hrana-client",
+    "better-sqlite3",
+    "libsql",
+    "archiver",
+  ],
   // biome-ignore lint/suspicious/noExplicitAny: webpack config types not available
   webpack: (config: any, { isServer }: { isServer: boolean }) => {
     if (isServer) {
