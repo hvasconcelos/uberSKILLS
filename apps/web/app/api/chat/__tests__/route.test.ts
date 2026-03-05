@@ -10,6 +10,7 @@ vi.mock("@openrouter/ai-sdk-provider", () => ({
 
 vi.mock("ai", () => ({
   streamText: vi.fn(),
+  convertToModelMessages: vi.fn().mockImplementation((msgs: unknown) => Promise.resolve(msgs)),
 }));
 
 const { getDecryptedApiKey } = await import("@uberskills/db");
@@ -163,7 +164,9 @@ describe("POST /api/chat", () => {
     expect(mockedStreamText).toHaveBeenCalledWith(
       expect.objectContaining({
         system: expect.stringContaining("SKILL.md"),
-        messages,
+        messages: expect.arrayContaining([
+          expect.objectContaining({ role: "user", content: "Create a React component skill" }),
+        ]),
       }),
     );
 

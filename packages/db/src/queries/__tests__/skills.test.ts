@@ -307,5 +307,39 @@ describe("skills query functions", () => {
       expect(result.total).toBe(0);
       expect(result.totalPages).toBe(0);
     });
+
+    it("sorts by name ascending", () => {
+      const result = listSkills({ sort: "name_asc" });
+      const names = result.data.map((s) => s.name);
+      expect(names).toEqual(["Alpha Skill", "Beta Skill", "Gamma Skill"]);
+    });
+
+    it("sorts by name descending", () => {
+      const result = listSkills({ sort: "name_desc" });
+      const names = result.data.map((s) => s.name);
+      expect(names).toEqual(["Gamma Skill", "Beta Skill", "Alpha Skill"]);
+    });
+
+    it("sorts by newest (createdAt descending)", () => {
+      const result = listSkills({ sort: "newest" });
+      expect(result.data.length).toBe(3);
+      // All created at similar times, just verify the sort is applied without error
+      for (let i = 1; i < result.data.length; i++) {
+        const prevTime = result.data[i - 1]?.createdAt.getTime() ?? 0;
+        const currTime = result.data[i]?.createdAt.getTime() ?? 0;
+        expect(prevTime).toBeGreaterThanOrEqual(currTime);
+      }
+    });
+
+    it("sorts by oldest (createdAt ascending)", () => {
+      const result = listSkills({ sort: "oldest" });
+      expect(result.data.length).toBe(3);
+      // All created at similar times, just verify the sort is applied without error
+      for (let i = 1; i < result.data.length; i++) {
+        const prevTime = result.data[i - 1]?.createdAt.getTime() ?? 0;
+        const currTime = result.data[i]?.createdAt.getTime() ?? 0;
+        expect(prevTime).toBeLessThanOrEqual(currTime);
+      }
+    });
   });
 });
