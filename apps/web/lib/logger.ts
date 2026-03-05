@@ -13,7 +13,7 @@ const BANNER = `
 `;
 
 const logger = pino({
-  level: isDev ? "debug" : "info",
+  level: process.env.LOG_LEVEL ?? "info",
   redact: ["apiKey", "openrouterApiKey", "authorization"],
   ...(isDev
     ? {
