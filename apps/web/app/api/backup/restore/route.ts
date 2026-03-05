@@ -3,7 +3,10 @@ import { dirname, resolve } from "node:path";
 import { resetDbForTesting } from "@uberskills/db";
 import { type NextRequest, NextResponse } from "next/server";
 
-import { getDbPath } from "../../../../lib/db-path";
+import { getDbPath } from "@/lib/db-path";
+
+/** First 16 bytes of every valid SQLite database file. */
+const SQLITE_MAGIC = "SQLite format 3\0";
 
 /**
  * POST /api/backup/restore -- Restores the database from an uploaded SQLite file.
@@ -37,8 +40,6 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
-    // Validate SQLite magic bytes: "SQLite format 3\0" at offset 0
-    const SQLITE_MAGIC = "SQLite format 3\0";
     if (buffer.length < 16 || buffer.subarray(0, 16).toString("ascii") !== SQLITE_MAGIC) {
       return NextResponse.json(
         { error: "Invalid file. Please upload a valid SQLite database.", code: "INVALID_FILE" },

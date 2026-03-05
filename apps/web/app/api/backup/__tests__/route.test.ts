@@ -25,7 +25,10 @@ describe("GET /api/backup", () => {
 
     expect(response.status).toBe(200);
     expect(response.headers.get("Content-Type")).toBe("application/octet-stream");
-    expect(response.headers.get("Content-Disposition")).toContain("uberskills-backup-");
+    const disposition = response.headers.get("Content-Disposition") ?? "";
+    expect(disposition).toContain("uberskills-backup-");
+    // Filename should follow YYYY-MM-DD format (e.g. uberskills-backup-2026-03-05.db)
+    expect(disposition).toMatch(/uberskills-backup-\d{4}-\d{2}-\d{2}\.db/);
   });
 
   it("returns 404 when database file does not exist", async () => {

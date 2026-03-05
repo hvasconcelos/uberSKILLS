@@ -1,7 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { NextResponse } from "next/server";
 
-import { getDbPath } from "../../../lib/db-path";
+import { getDbPath } from "@/lib/db-path";
 
 /**
  * GET /api/backup -- Downloads the raw SQLite database file.
@@ -27,8 +27,8 @@ export async function GET(): Promise<NextResponse> {
     }
 
     const buffer = readFileSync(dbPath);
-    const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
-    const filename = `uberskills-backup-${timestamp}.db`;
+    const date = new Date().toISOString().slice(0, 10);
+    const filename = `uberskills-backup-${date}.db`;
 
     return new NextResponse(buffer, {
       status: 200,
