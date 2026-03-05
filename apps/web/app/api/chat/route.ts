@@ -1,19 +1,14 @@
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import { getDecryptedApiKey } from "@uberskills/db";
-import { streamText } from "ai";
+import type { UIMessage } from "@ai-sdk/react";
+import { convertToModelMessages, streamText } from "ai";
 import { NextResponse } from "next/server";
 
 import { SKILL_CREATION_SYSTEM_PROMPT } from "@/lib/system-prompts";
 
-/** Shape of an individual message in the chat request body. */
-interface ChatMessage {
-  role: "user" | "assistant" | "system";
-  content: string;
-}
-
 /** Expected request body for the POST /api/chat route. */
 interface ChatRequestBody {
-  messages: ChatMessage[];
+  messages: UIMessage[];
   model: string;
 }
 
@@ -80,7 +75,7 @@ export async function POST(request: Request): Promise<Response> {
     const result = streamText({
       model: openrouter(model),
       system: SKILL_CREATION_SYSTEM_PROMPT,
-      messages,
+      messages: await convertToModelMessages(messages),
     });
 
     return result.toUIMessageStreamResponse();
