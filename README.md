@@ -38,6 +38,11 @@ uberSKILLS is an open-source web application that provides an integrated authori
 
 ## Quickstart
 
+### Prerequisites
+
+- **Node.js** >= 18 — required by Next.js 15
+- **Bun** >= 1.3.10 — used as the package manager and runtime
+
 ```bash
 # Clone the repository
 git clone https://github.com/hvasconcelos/uberskills.git
