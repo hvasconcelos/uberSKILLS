@@ -40,7 +40,7 @@ uberskills/
 │   ├── db/                     # @uberskills/db -- Drizzle schema, queries, crypto
 │   ├── skill-engine/           # @uberskills/skill-engine -- parser, validator, generator, importer, exporter
 │   └── ui/                     # @uberskills/ui -- shadcn/ui components
-├── specs/                      # Project specifications (read-only reference)
+├── docs/                       # Project documentation
 ├── Dockerfile                  # Multi-stage Docker build
 ├── docker-compose.yml          # Docker Compose service definition
 ├── CONTRIBUTING.md             # Contribution guidelines
@@ -273,15 +273,16 @@ return NextResponse.json({ error: "Human-readable message", code: "ERROR_CODE" }
 - Production runs as non-root user (`nextjs:nodejs`), exposes port 3000.
 - Build and run: `docker compose up -d`.
 
-## Specification Reference
+## Documentation Reference
 
-Detailed specs are in the `specs/` directory:
+Project documentation is in the `docs/` directory:
 
-- `specs/01-overview/` -- Vision, design system, color palettes
-- `specs/02-architecture/` -- Monorepo structure, routes, data flow
-- `specs/03-data-models/` -- SQLite schema, Drizzle definitions, TypeScript interfaces
-- `specs/04-functional-requirements/` -- Features FR1-FR7 with wireframes
-- `specs/05-non-functional-requirements/` -- Performance, security, accessibility targets
-- `specs/06-integrations/` -- OpenRouter API, Vercel AI SDK patterns
-- `specs/07-deployment/` -- Docker, environment setup, production config
-- `specs/STORIES.md` -- 62 implementation stories across 8 sprints
+- `docs/getting-started.md` -- Installation, setup, and first steps
+- `docs/features.md` -- Feature guide for users
+- `docs/architecture.md` -- Monorepo structure, packages, data flow
+- `docs/database.md` -- SQLite schema, Drizzle ORM patterns
+- `docs/api-reference.md` -- REST API endpoints and response formats
+- `docs/ai-integration.md` -- OpenRouter, Vercel AI SDK, streaming
+- `docs/skill-engine.md` -- Parser, validator, generator, importer, exporter
+- `docs/deployment.md` -- Docker, Vercel, self-hosting options
+- `docs/security.md` -- Encryption, input validation, filesystem safety

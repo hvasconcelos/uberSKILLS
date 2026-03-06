@@ -107,7 +107,7 @@ Order imports as:
 | `packages/db/` | Database schema, client, queries, encryption |
 | `packages/skill-engine/` | SKILL.md parser, validator, generator, importer, exporter |
 | `packages/ui/` | Shared shadcn/ui components |
-| `specs/` | Project specifications (read-only reference) |
+| `docs/` | Project documentation |
 
 ## Testing
 
