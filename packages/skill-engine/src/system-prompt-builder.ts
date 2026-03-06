@@ -75,12 +75,7 @@ export function isFileReferenced(resolvedContent: string, filePath: string): boo
  * Files are appended as clearly delimited sections after the main skill content.
  */
 export function buildTestSystemPrompt(options: BuildSystemPromptOptions): BuildSystemPromptResult {
-  const {
-    resolvedContent,
-    files,
-    resourceInlineThreshold = 100,
-    previewLines = 20,
-  } = options;
+  const { resolvedContent, files, resourceInlineThreshold = 100, previewLines = 20 } = options;
 
   if (files.length === 0) {
     return { systemPrompt: resolvedContent, inlinedCount: 0, summarizedCount: 0 };
@@ -119,9 +114,7 @@ export function buildTestSystemPrompt(options: BuildSystemPromptOptions): BuildS
       );
       summarizedCount++;
     } else {
-      fileSections.push(
-        `### File: ${file.path} (${file.type})\n\`\`\`\n${file.content}\n\`\`\``,
-      );
+      fileSections.push(`### File: ${file.path} (${file.type})\n\`\`\`\n${file.content}\n\`\`\``);
       inlinedCount++;
     }
   }
