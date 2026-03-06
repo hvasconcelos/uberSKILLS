@@ -1,11 +1,29 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@uberskills/db", () => ({
-  getDecryptedApiKey: vi.fn(),
+  isModelCacheEmpty: vi.fn(),
+  listModels: vi.fn(),
 }));
 
-const { getDecryptedApiKey } = await import("@uberskills/db");
-const mockedGetDecryptedApiKey = vi.mocked(getDecryptedApiKey);
+vi.mock("@/lib/sync-models", () => ({
+  fetchAndSyncModels: vi.fn(),
+  isSyncError: vi.fn(),
+}));
+
+vi.mock("@/lib/logger", () => ({
+  routeLogger: () => ({
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+  }),
+}));
+
+const { isModelCacheEmpty, listModels } = await import("@uberskills/db");
+const { fetchAndSyncModels, isSyncError } = await import("@/lib/sync-models");
+const mockedIsModelCacheEmpty = vi.mocked(isModelCacheEmpty);
+const mockedListModels = vi.mocked(listModels);
+const mockedFetchAndSyncModels = vi.mocked(fetchAndSyncModels);
+const mockedIsSyncError = vi.mocked(isSyncError);
 
 const { GET } = await import("../route");
 
@@ -16,7 +34,13 @@ beforeEach(() => {
 
 describe("GET /api/models", () => {
   it("returns 401 when no API key is configured", async () => {
-    mockedGetDecryptedApiKey.mockReturnValue(null);
+    mockedIsModelCacheEmpty.mockReturnValue(true);
+    const err = Object.assign(new Error("No API key configured"), {
+      code: "NO_API_KEY",
+      httpStatus: 401,
+    });
+    mockedFetchAndSyncModels.mockRejectedValueOnce(err);
+    mockedIsSyncError.mockReturnValue(true);
 
     const response = await GET();
     const data = await response.json();
@@ -26,22 +50,31 @@ describe("GET /api/models", () => {
   });
 
   it("returns sorted model list with provider field on success", async () => {
-    mockedGetDecryptedApiKey.mockReturnValue("sk-or-v1-test");
-
-    const mockModels = {
-      data: [
-        { id: "openai/gpt-4", name: "GPT-4", architecture: { modality: "text->text" } },
-        {
-          id: "anthropic/claude-sonnet-4",
-          name: "Claude Sonnet 4",
-          architecture: { modality: "text->text" },
-        },
-      ],
-    };
-
-    vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
-      new Response(JSON.stringify(mockModels), { status: 200 }),
-    );
+    mockedIsModelCacheEmpty.mockReturnValue(false);
+    mockedListModels.mockReturnValue([
+      {
+        id: "openai/gpt-4",
+        slug: "openai-gpt-4",
+        name: "GPT-4",
+        provider: "openai",
+        contextLength: 8192,
+        inputPrice: "0.03",
+        outputPrice: "0.06",
+        modality: "text->text",
+        syncedAt: new Date(),
+      },
+      {
+        id: "anthropic/claude-sonnet-4",
+        slug: "anthropic-claude-sonnet-4",
+        name: "Claude Sonnet 4",
+        provider: "anthropic",
+        contextLength: 200000,
+        inputPrice: "0.003",
+        outputPrice: "0.015",
+        modality: "text->text",
+        syncedAt: new Date(),
+      },
+    ]);
 
     const response = await GET();
     const data = await response.json();
@@ -55,55 +88,48 @@ describe("GET /api/models", () => {
     expect(data.models[1].provider).toBe("openai");
   });
 
-  it("filters out non-chat-capable models", async () => {
-    mockedGetDecryptedApiKey.mockReturnValue("sk-or-v1-test");
-
-    const mockModels = {
-      data: [
-        { id: "openai/gpt-4", name: "GPT-4", architecture: { modality: "text->text" } },
-        {
-          id: "stability/sdxl",
-          name: "Stable Diffusion",
-          architecture: { modality: "text->image" },
-        },
-      ],
-    };
-
-    vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
-      new Response(JSON.stringify(mockModels), { status: 200 }),
-    );
+  it("auto-syncs on first access when cache is empty", async () => {
+    mockedIsModelCacheEmpty.mockReturnValue(true);
+    mockedFetchAndSyncModels.mockResolvedValueOnce(1);
+    mockedListModels.mockReturnValue([
+      {
+        id: "openai/gpt-4",
+        slug: "openai-gpt-4",
+        name: "GPT-4",
+        provider: "openai",
+        contextLength: 8192,
+        inputPrice: "0.03",
+        outputPrice: "0.06",
+        modality: "text->text",
+        syncedAt: new Date(),
+      },
+    ]);
 
     const response = await GET();
     const data = await response.json();
 
+    expect(mockedFetchAndSyncModels).toHaveBeenCalledOnce();
     expect(data.models).toHaveLength(1);
     expect(data.models[0].id).toBe("openai/gpt-4");
   });
 
-  it("includes models without architecture info", async () => {
-    mockedGetDecryptedApiKey.mockReturnValue("sk-or-v1-test");
+  it("skips sync when cache is populated", async () => {
+    mockedIsModelCacheEmpty.mockReturnValue(false);
+    mockedListModels.mockReturnValue([]);
 
-    const mockModels = {
-      data: [{ id: "unknown/model", name: "Unknown Model" }],
-    };
+    await GET();
 
-    vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
-      new Response(JSON.stringify(mockModels), { status: 200 }),
-    );
-
-    const response = await GET();
-    const data = await response.json();
-
-    expect(data.models).toHaveLength(1);
-    expect(data.models[0].provider).toBe("unknown");
+    expect(mockedFetchAndSyncModels).not.toHaveBeenCalled();
   });
 
   it("returns 401 when OpenRouter returns 401", async () => {
-    mockedGetDecryptedApiKey.mockReturnValue("sk-or-v1-bad");
-
-    vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
-      new Response("Unauthorized", { status: 401 }),
-    );
+    mockedIsModelCacheEmpty.mockReturnValue(true);
+    const err = Object.assign(new Error("Invalid API key"), {
+      code: "INVALID_KEY",
+      httpStatus: 401,
+    });
+    mockedFetchAndSyncModels.mockRejectedValueOnce(err);
+    mockedIsSyncError.mockReturnValue(true);
 
     const response = await GET();
     const data = await response.json();
@@ -113,11 +139,13 @@ describe("GET /api/models", () => {
   });
 
   it("returns 429 when rate limited", async () => {
-    mockedGetDecryptedApiKey.mockReturnValue("sk-or-v1-key");
-
-    vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
-      new Response("Too Many Requests", { status: 429 }),
-    );
+    mockedIsModelCacheEmpty.mockReturnValue(true);
+    const err = Object.assign(new Error("Rate limited"), {
+      code: "RATE_LIMITED",
+      httpStatus: 429,
+    });
+    mockedFetchAndSyncModels.mockRejectedValueOnce(err);
+    mockedIsSyncError.mockReturnValue(true);
 
     const response = await GET();
     const data = await response.json();
@@ -127,14 +155,18 @@ describe("GET /api/models", () => {
   });
 
   it("returns 502 on network error", async () => {
-    mockedGetDecryptedApiKey.mockReturnValue("sk-or-v1-key");
-
-    vi.spyOn(globalThis, "fetch").mockRejectedValueOnce(new Error("Network failure"));
+    mockedIsModelCacheEmpty.mockReturnValue(true);
+    const err = Object.assign(new Error("Upstream error"), {
+      code: "UPSTREAM_ERROR",
+      httpStatus: 502,
+    });
+    mockedFetchAndSyncModels.mockRejectedValueOnce(err);
+    mockedIsSyncError.mockReturnValue(true);
 
     const response = await GET();
     const data = await response.json();
 
     expect(response.status).toBe(502);
-    expect(data.code).toBe("NETWORK_ERROR");
+    expect(data.code).toBe("UPSTREAM_ERROR");
   });
 });

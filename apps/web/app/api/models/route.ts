@@ -2,7 +2,7 @@ import { isModelCacheEmpty, listModels } from "@uberskills/db";
 import { NextResponse } from "next/server";
 
 import { routeLogger } from "@/lib/logger";
-import { fetchAndSyncModels } from "@/lib/sync-models";
+import { fetchAndSyncModels, isSyncError } from "@/lib/sync-models";
 
 const log = routeLogger("GET", "/api/models");
 
@@ -16,11 +16,7 @@ export async function GET(): Promise<NextResponse> {
   try {
     // Auto-populate on first access
     if (isModelCacheEmpty()) {
-      try {
-        await fetchAndSyncModels();
-      } catch {
-        // Silent failure -- return empty list if sync fails
-      }
+      await fetchAndSyncModels();
     }
 
     const rows = listModels();
@@ -41,6 +37,13 @@ export async function GET(): Promise<NextResponse> {
     log.info({ count: models.length }, "models loaded");
     return NextResponse.json({ models });
   } catch (err) {
+    if (isSyncError(err)) {
+      log.warn({ code: err.code }, err.message);
+      return NextResponse.json(
+        { error: err.message, code: err.code },
+        { status: err.httpStatus },
+      );
+    }
     log.error({ err }, "failed to load models");
     return NextResponse.json(
       { error: "Failed to load models", code: "INTERNAL_ERROR" },
