@@ -35,6 +35,8 @@ export async function GET(_request: Request, context: RouteContext): Promise<Nex
       latencyMs: testRun.latencyMs,
       ttftMs: testRun.ttftMs,
       error: testRun.error,
+      sandboxStateId: testRun.sandboxStateId,
+      hasSandboxResult: !!testRun.sandboxResult,
       createdAt: testRun.createdAt,
     });
   } catch (err) {

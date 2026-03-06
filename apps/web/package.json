@@ -33,7 +33,8 @@
     "react-dom": "^19",
     "react-markdown": "^10.1.0",
     "sonner": "^2.0.7",
-    "tailwindcss": "^4.2.1"
+    "tailwindcss": "^4.2.1",
+    "zod": "^3.24.0"
   },
   "devDependencies": {
     "@playwright/test": "^1.58.2",

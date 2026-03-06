@@ -141,6 +141,8 @@ describe("schema", () => {
         "ttft_ms",
         "status",
         "error",
+        "sandbox_state_id",
+        "sandbox_result",
         "created_at",
       ]);
     });

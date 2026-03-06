@@ -8,3 +8,11 @@ export {
   importFromDirectory,
   importFromZip,
 } from "./importer";
+export {
+  buildFileIndexFromZip,
+  MAX_FILE_SIZE,
+  MAX_ZIP_FILES,
+  MAX_ZIP_SIZE,
+  readTextFileFromZip,
+  Sandbox,
+} from "./sandbox";

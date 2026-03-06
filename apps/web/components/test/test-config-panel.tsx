@@ -21,6 +21,8 @@ import { toast } from "sonner";
 import { ModelSelector } from "@/components/model-selector";
 
 import { ArgumentInputs } from "./argument-inputs";
+import type { SandboxStateItem } from "./sandbox-upload";
+import { SandboxUpload } from "./sandbox-upload";
 
 /** Serialised skill data passed from the server component. */
 export interface TestSkillData {
@@ -34,6 +36,8 @@ export interface TestSkillData {
 export interface TestRunStream {
   testRunId: string;
   reader: ReadableStreamDefaultReader<Uint8Array>;
+  /** Sandbox state ID used for this run, if any. */
+  sandboxStateId: string | null;
 }
 
 interface TestConfigPanelProps {
@@ -49,9 +53,9 @@ interface TestConfigPanelProps {
 /**
  * Left panel of the skill testing page.
  *
- * Contains model selector, resolved system prompt preview, argument inputs
- * for detected $VARIABLE_NAME placeholders, user message textarea, and
- * the "Run Test" button that initiates a test via POST /api/test.
+ * Contains model selector, resolved system prompt preview, sandbox selector,
+ * argument inputs for detected $VARIABLE_NAME placeholders, user message
+ * textarea, and the "Run Test" button that initiates a test via POST /api/test.
  */
 export function TestConfigPanel({
   skill,
@@ -64,6 +68,7 @@ export function TestConfigPanel({
   const [userMessage, setUserMessage] = useState("");
   const [argValues, setArgValues] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedSandbox, setSelectedSandbox] = useState<SandboxStateItem | null>(null);
 
   // Detect $VARIABLE_NAME placeholders in skill content
   const placeholders = useMemo(() => detectPlaceholders(skill.content), [skill.content]);
@@ -91,6 +96,8 @@ export function TestConfigPanel({
           userMessage: userMessage.trim(),
           // Only include arguments when the skill has placeholders to substitute
           arguments: placeholders.length > 0 ? argValues : undefined,
+          // Include sandbox state ID if a sandbox is selected
+          sandboxStateId: selectedSandbox?.id ?? undefined,
         }),
       });
 
@@ -110,13 +117,22 @@ export function TestConfigPanel({
         return;
       }
 
-      onTestStart({ testRunId, reader });
+      onTestStart({ testRunId, reader, sandboxStateId: selectedSandbox?.id ?? null });
     } catch {
       toast.error("Failed to start test. Check your network connection.");
     } finally {
       setIsSubmitting(false);
     }
-  }, [canRun, skill.id, selectedModel, userMessage, argValues, placeholders.length, onTestStart]);
+  }, [
+    canRun,
+    skill.id,
+    selectedModel,
+    userMessage,
+    argValues,
+    placeholders.length,
+    selectedSandbox,
+    onTestStart,
+  ]);
 
   // Early return: prompt the user to configure an API key before testing
   if (!hasApiKey) {
@@ -190,6 +206,14 @@ export function TestConfigPanel({
             </DialogContent>
           </Dialog>
         </div>
+
+        {/* Sandbox file upload / selector */}
+        <SandboxUpload
+          skillId={skill.id}
+          selectedId={selectedSandbox?.id ?? null}
+          onSelect={setSelectedSandbox}
+          disabled={isBusy}
+        />
 
         {/* Argument inputs for detected placeholders */}
         <ArgumentInputs

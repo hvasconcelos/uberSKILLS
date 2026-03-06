@@ -85,6 +85,8 @@ const fakeTestRun = {
   ttftMs: null,
   status: "running" as const,
   error: null,
+  sandboxStateId: null,
+  sandboxResult: null,
   createdAt: new Date(),
 };
 
@@ -354,6 +356,7 @@ describe("POST /api/test", () => {
       latencyMs: expect.any(Number),
       ttftMs: null,
       status: "completed",
+      sandboxResult: null,
     });
   });
 

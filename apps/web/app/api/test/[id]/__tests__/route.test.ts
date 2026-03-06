@@ -34,6 +34,8 @@ const fakeTestRun = {
   ttftMs: 200,
   status: "completed" as const,
   error: null,
+  sandboxStateId: null,
+  sandboxResult: null,
   createdAt: MOCK_DATE,
 };
 

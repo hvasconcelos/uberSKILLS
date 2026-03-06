@@ -16,6 +16,8 @@ export interface CreateTestRunInput {
   /** JSON-serialized substitution arguments (default: "{}"). */
   arguments?: string;
   status?: TestRunStatus;
+  /** Optional sandbox state ID if this run uses a sandbox. */
+  sandboxStateId?: string;
 }
 
 /** Fields accepted when updating an existing test run (all optional). */
@@ -28,6 +30,8 @@ export interface UpdateTestRunInput {
   ttftMs?: number | null;
   status?: TestRunStatus;
   error?: string | null;
+  /** JSON-serialized SandboxResult. */
+  sandboxResult?: string | null;
 }
 
 // ---------------------------------------------------------------------------
@@ -71,6 +75,7 @@ export function createTestRun(input: CreateTestRunInput): typeof testRuns.$infer
       userMessage: input.userMessage,
       arguments: input.arguments ?? "{}",
       status: input.status ?? "running",
+      sandboxStateId: input.sandboxStateId ?? null,
       createdAt: new Date(),
     })
     .returning()
@@ -101,6 +106,7 @@ export function updateTestRun(
   if (input.ttftMs !== undefined) updates.ttftMs = input.ttftMs;
   if (input.status !== undefined) updates.status = input.status;
   if (input.error !== undefined) updates.error = input.error;
+  if (input.sandboxResult !== undefined) updates.sandboxResult = input.sandboxResult;
 
   if (Object.keys(updates).length === 0) {
     return getTestRun(id);

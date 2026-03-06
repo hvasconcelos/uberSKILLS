@@ -27,6 +27,8 @@ export interface TestRunRow {
   promptTokens: number | null;
   completionTokens: number | null;
   ttftMs: number | null;
+  sandboxStateId: string | null;
+  hasSandboxResult: boolean;
   createdAt: string;
 }
 
@@ -35,6 +37,7 @@ export interface HistorySelection {
   text: string;
   error: string | null;
   metrics: TestMetricsData;
+  sandboxInfo?: { testRunId: string; sandboxStateId: string } | null;
 }
 
 interface TestHistoryProps {
@@ -111,6 +114,10 @@ export function TestHistory({ skillId, refreshKey, onSelectRun }: TestHistoryPro
           latencyMs: run.latencyMs,
           ttftMs: run.ttftMs,
         },
+        sandboxInfo:
+          run.hasSandboxResult && run.sandboxStateId
+            ? { testRunId: run.id, sandboxStateId: run.sandboxStateId }
+            : null,
       });
     },
     [onSelectRun],

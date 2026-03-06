@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useRef, useState } from "react";
-
+import { SandboxResults } from "@/components/test/sandbox-results";
 import type { TestRunStream, TestSkillData } from "@/components/test/test-config-panel";
 import { TestConfigPanel } from "@/components/test/test-config-panel";
 import type { HistorySelection } from "@/components/test/test-history";
@@ -23,6 +23,14 @@ interface TestRunResponse {
   latencyMs: number | null;
   ttftMs: number | null;
   error: string | null;
+  sandboxStateId: string | null;
+  hasSandboxResult: boolean;
+}
+
+/** Sandbox info for the current test run. */
+interface SandboxInfo {
+  testRunId: string;
+  sandboxStateId: string;
 }
 
 export function TestPageClient({ skill, defaultModel, hasApiKey }: TestPageClientProps) {
@@ -30,10 +38,12 @@ export function TestPageClient({ skill, defaultModel, hasApiKey }: TestPageClien
   const [streamedText, setStreamedText] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [metrics, setMetrics] = useState<TestMetricsData | null>(null);
+  const [sandboxInfo, setSandboxInfo] = useState<SandboxInfo | null>(null);
   // Incremented after each test completes to trigger a history table refresh
   const [historyRefreshKey, setHistoryRefreshKey] = useState(0);
 
   const testRunIdRef = useRef<string | null>(null);
+  const sandboxStateIdRef = useRef<string | null>(null);
   const readerRef = useRef<ReadableStreamDefaultReader<Uint8Array> | null>(null);
 
   // Retries up to 3 times since the server's onFinish callback may lag behind the stream ending.
@@ -64,6 +74,12 @@ export function TestPageClient({ skill, defaultModel, hasApiKey }: TestPageClien
           latencyMs: data.latencyMs,
           ttftMs: data.ttftMs,
         });
+
+        // Show sandbox results if this run had a sandbox
+        if (data.hasSandboxResult && data.sandboxStateId) {
+          setSandboxInfo({ testRunId, sandboxStateId: data.sandboxStateId });
+        }
+
         return;
       } catch {
         return;
@@ -77,7 +93,9 @@ export function TestPageClient({ skill, defaultModel, hasApiKey }: TestPageClien
       setStreamedText("");
       setError(null);
       setMetrics(null);
+      setSandboxInfo(null);
       testRunIdRef.current = stream.testRunId;
+      sandboxStateIdRef.current = stream.sandboxStateId;
       readerRef.current = stream.reader;
 
       const decoder = new TextDecoder();
@@ -111,6 +129,7 @@ export function TestPageClient({ skill, defaultModel, hasApiKey }: TestPageClien
     setStreamedText(selection.text);
     setError(selection.error);
     setMetrics(selection.metrics);
+    setSandboxInfo(selection.sandboxInfo ?? null);
   }, []);
 
   return (
@@ -136,6 +155,14 @@ export function TestPageClient({ skill, defaultModel, hasApiKey }: TestPageClien
           />
         </div>
       </div>
+
+      {/* Sandbox results panel (only shown when a sandbox test run completes) */}
+      {sandboxInfo && !isRunning && (
+        <SandboxResults
+          testRunId={sandboxInfo.testRunId}
+          sandboxStateId={sandboxInfo.sandboxStateId}
+        />
+      )}
 
       {/* Test history table */}
       <TestHistory

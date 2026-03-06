@@ -23,5 +23,9 @@ export interface TestRun {
   status: TestRunStatus;
   /** Error message when status is "error". */
   error: string | null;
+  /** ID of the sandbox state used for this run (null if no sandbox). */
+  sandboxStateId: string | null;
+  /** JSON-serialized SandboxResult (null if no sandbox or not yet complete). */
+  sandboxResult: string | null;
   createdAt: Date;
 }

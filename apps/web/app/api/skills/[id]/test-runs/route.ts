@@ -34,6 +34,8 @@ export async function GET(_request: Request, context: RouteContext): Promise<Nex
       promptTokens: run.promptTokens,
       completionTokens: run.completionTokens,
       ttftMs: run.ttftMs,
+      sandboxStateId: run.sandboxStateId ?? null,
+      hasSandboxResult: !!run.sandboxResult,
       createdAt: run.createdAt,
     }));
 

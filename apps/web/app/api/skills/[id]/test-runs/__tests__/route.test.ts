@@ -59,6 +59,8 @@ describe("GET /api/skills/[id]/test-runs", () => {
         systemPrompt: "",
         userMessage: "",
         arguments: "{}",
+        sandboxStateId: null,
+        sandboxResult: null,
       },
       {
         id: "tr-2",
@@ -76,6 +78,8 @@ describe("GET /api/skills/[id]/test-runs", () => {
         systemPrompt: "",
         userMessage: "",
         arguments: "{}",
+        sandboxStateId: null,
+        sandboxResult: null,
       },
     ]);
 

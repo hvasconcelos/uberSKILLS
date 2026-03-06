@@ -114,6 +114,8 @@ export const testRuns = sqliteTable(
       .notNull()
       .default("running"),
     error: text("error"),
+    sandboxStateId: text("sandbox_state_id"),
+    sandboxResult: text("sandbox_result"),
     createdAt: integer("created_at", { mode: "timestamp" })
       .notNull()
       .$defaultFn(() => new Date()),
@@ -122,6 +124,29 @@ export const testRuns = sqliteTable(
     index("idx_test_runs_skill_id").on(table.skillId),
     index("idx_test_runs_created_at").on(table.createdAt),
   ],
+);
+
+// ---------------------------------------------------------------------------
+// sandbox_states — predefined filesystem states for sandbox testing
+// ---------------------------------------------------------------------------
+
+export const sandboxStates = sqliteTable(
+  "sandbox_states",
+  {
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => nanoid()),
+    skillId: text("skill_id")
+      .notNull()
+      .references(() => skills.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    zipPath: text("zip_path").notNull(),
+    fileIndex: text("file_index").notNull().default("[]"),
+    createdAt: integer("created_at", { mode: "timestamp" })
+      .notNull()
+      .$defaultFn(() => new Date()),
+  },
+  (table) => [index("idx_sandbox_states_skill_id").on(table.skillId)],
 );
 
 // ---------------------------------------------------------------------------
