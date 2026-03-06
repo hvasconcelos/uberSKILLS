@@ -24,8 +24,8 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV DATABASE_URL=file:/app/data/uberskills.db
 
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
+RUN groupadd --system --gid 1001 nodejs
+RUN useradd --system --uid 1001 --gid nodejs nextjs
 
 # Copy the standalone server and static assets produced by `next build`
 COPY --from=builder /app/apps/web/.next/standalone ./
