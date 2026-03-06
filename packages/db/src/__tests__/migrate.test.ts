@@ -33,6 +33,7 @@ describe("migrate", () => {
 
     const tableNames = tables.map((t) => t.name).sort();
     expect(tableNames).toEqual([
+      "models",
       "settings",
       "skill_files",
       "skill_versions",

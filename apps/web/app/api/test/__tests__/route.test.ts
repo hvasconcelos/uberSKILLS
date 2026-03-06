@@ -3,12 +3,14 @@ import { beforeEach, describe, expect, it, type Mock, vi } from "vitest";
 vi.mock("@uberskills/db", () => ({
   getDecryptedApiKey: vi.fn(),
   getSkillById: vi.fn(),
+  listFiles: vi.fn(),
   createTestRun: vi.fn(),
   updateTestRun: vi.fn(),
 }));
 
 vi.mock("@uberskills/skill-engine", () => ({
   substitute: vi.fn(),
+  buildTestSystemPrompt: vi.fn(),
 }));
 
 vi.mock("@openrouter/ai-sdk-provider", () => ({
@@ -19,16 +21,18 @@ vi.mock("ai", () => ({
   streamText: vi.fn(),
 }));
 
-const { getDecryptedApiKey, getSkillById, createTestRun, updateTestRun } = await import(
+const { getDecryptedApiKey, getSkillById, listFiles, createTestRun, updateTestRun } = await import(
   "@uberskills/db"
 );
 const mockedGetDecryptedApiKey = vi.mocked(getDecryptedApiKey);
 const mockedGetSkillById = vi.mocked(getSkillById);
+const mockedListFiles = vi.mocked(listFiles);
 const mockedCreateTestRun = vi.mocked(createTestRun);
 const mockedUpdateTestRun = vi.mocked(updateTestRun);
 
-const { substitute } = await import("@uberskills/skill-engine");
+const { substitute, buildTestSystemPrompt } = await import("@uberskills/skill-engine");
 const mockedSubstitute = vi.mocked(substitute);
+const mockedBuildTestSystemPrompt = vi.mocked(buildTestSystemPrompt);
 
 const { createOpenRouter } = await import("@openrouter/ai-sdk-provider");
 const mockedCreateOpenRouter = vi.mocked(createOpenRouter);
@@ -93,6 +97,12 @@ function setupHappyPath() {
   mockedGetDecryptedApiKey.mockReturnValue("sk-or-v1-test");
   mockedGetSkillById.mockReturnValue(fakeSkill);
   mockedSubstitute.mockReturnValue("You are a developer. Help with coding.");
+  mockedListFiles.mockReturnValue([]);
+  mockedBuildTestSystemPrompt.mockReturnValue({
+    systemPrompt: "You are a developer. Help with coding.",
+    inlinedCount: 0,
+    summarizedCount: 0,
+  });
   mockedCreateTestRun.mockReturnValue(fakeTestRun);
 
   const mockModelFn = vi.fn().mockReturnValue({ modelId: "anthropic/claude-sonnet-4" });
