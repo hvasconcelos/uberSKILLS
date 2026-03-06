@@ -33,8 +33,8 @@ COPY --from=builder /app/apps/web/.next/standalone ./
 COPY --from=builder /app/apps/web/.next/static ./apps/web/.next/static
 COPY --from=builder /app/apps/web/public ./apps/web/public
 
-# Ensure the data directory exists and is writable by the non-root user
-RUN mkdir -p /app/data && chown -R nextjs:nodejs /app/data
+# Ensure the data and cache directories exist and are writable by the non-root user
+RUN mkdir -p /app/data /app/apps/web/.next/cache && chown -R nextjs:nodejs /app/data /app/apps/web/.next/cache
 
 USER nextjs
 
