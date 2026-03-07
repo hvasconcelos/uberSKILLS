@@ -12,7 +12,7 @@ import { join } from "node:path";
 // ---
 // Constants
 
-const VERSION = "0.9.0"; // Current version of this launcher
+const VERSION = "0.9.1"; // Current version of this launcher
 const REPO_URL = "https://github.com/hvasconcelos/uberskills.git"; // Upstream repository for app code
 const UBERSKILLS_HOME = join(homedir(), ".uberskills"); // Where all binaries, data, etc live
 const APP_DIR = join(UBERSKILLS_HOME, "app"); // Cloned app location
