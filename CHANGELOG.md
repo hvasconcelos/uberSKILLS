@@ -5,6 +5,43 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.1] - 2026-03-07
+
+### Added
+
+- **CLI Entry Point**
+  - `npx uberskills` command for running the app directly (#62)
+
+- **Documentation**
+  - Documentation page with usage guide
+  - Project documentation added to `docs/` directory, replacing `specs/` references
+  - README updated to reference `docs/` instead of `specs/`
+
+- **UI**
+  - Sticky footer with author attribution
+  - Progressive disclosure for skill files in test system prompt (#60)
+
+### Changed
+
+- **Monorepo & Tooling**
+  - Migrated from Bun to Node.js with pnpm as package manager (#61)
+  - Rebranded display titles from UberSkills to uberSKILLS
+
+- **Skill Engine**
+  - Aligned skill engine with Anthropic's official skill guide
+
+### Fixed
+
+- Granted `nextjs` user write access to `.next/cache` directory in Docker
+- Added `python3` and build tools to Dockerfile deps stage for `better-sqlite3`
+- Used `groupadd`/`useradd` in Dockerfile for Debian-based image
+- Corrected deploy test expectation to match mock file path
+- Surfaced `SyncError` in models route and updated tests
+- Added models table to migration test expectations
+- Resolved Biome lint errors in sidebar and chat panel
+- Resolved Biome formatting in models route
+- Fixed broken links in documentation
+
 ## [0.9.0] - 2026-03-06
 
 ### Added
@@ -98,4 +135,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Consistent padding on instructions tab content
 - Tab content max-width adjusted for balanced padding
 
+[0.9.1]: https://github.com/hvasconcelos/uberskills/releases/tag/v0.9.1
 [0.9.0]: https://github.com/hvasconcelos/uberskills/releases/tag/v0.9.0
