@@ -1,7 +1,7 @@
 "use client";
 
 import { Card, CardContent } from "@uberskills/ui";
-import { FlaskConical, Rocket, Wand2 } from "lucide-react";
+import { FileCode2, FlaskConical, GitCompare, Rocket, Share2, Wand2 } from "lucide-react";
 import { useInView } from "@/hooks/use-in-view";
 
 const features = [
@@ -22,6 +22,24 @@ const features = [
     title: "One-Click Deploy",
     description:
       "Deploy directly to ~/.claude/skills/ with one click, or export as a zip to share with your team.",
+  },
+  {
+    icon: Share2,
+    title: "Import & Share",
+    description:
+      "Import skills from zip files or directories. Export and share with your team or the community.",
+  },
+  {
+    icon: GitCompare,
+    title: "Version History",
+    description:
+      "Every edit is tracked. Browse previous versions of your skills and restore any revision.",
+  },
+  {
+    icon: FileCode2,
+    title: "SKILL.md Standard",
+    description:
+      "Built on the SKILL.md format with YAML frontmatter and markdown body. Validated, parsed, and generated automatically.",
   },
 ] as const;
 
