@@ -1,7 +1,5 @@
 import pino from "pino";
 
-const isDev = process.env.NODE_ENV !== "production";
-
 const BANNER = `
 ▄▄ ▄▄ ▄▄▄▄  ▄▄▄▄▄ ▄▄▄▄  ▄█████ ██ ▄█▀ ██ ██     ██     ▄█████
 ██ ██ ██▄██ ██▄▄  ██▄█▄ ▀▀▀▄▄▄ ████   ██ ██     ██     ▀▀▀▄▄▄
@@ -13,19 +11,15 @@ const BANNER = `
 const logger = pino({
   level: process.env.LOG_LEVEL ?? "info",
   redact: ["apiKey", "openrouterApiKey", "authorization"],
-  ...(isDev
-    ? {
-        transport: {
-          target: "pino-pretty",
-          options: {
-            colorize: true,
-            singleLine: true,
-            translateTime: "HH:MM:ss.l",
-            ignore: "pid,hostname",
-          },
-        },
-      }
-    : {}),
+  transport: {
+    target: "pino-pretty",
+    options: {
+      colorize: true,
+      singleLine: true,
+      translateTime: "HH:MM:ss.l",
+      ignore: "pid,hostname",
+    },
+  },
 });
 
 const globalForBanner = globalThis as unknown as { __uberskillsBannerShown?: boolean };

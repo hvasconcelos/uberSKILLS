@@ -76,18 +76,32 @@ export function AppSidebar() {
       <SidebarHeader>
         <Link href="/" className="flex items-center px-2 py-3">
           <Image
+            src="/uberSKILLS_logo_white.svg"
+            alt="uberSKILLS"
+            width={24}
+            height={24}
+            className="block group-data-[state=expanded]:hidden dark:hidden"
+          />
+          <Image
+            src="/uberSKILLS_icon_dark.svg"
+            alt="uberSKILLS"
+            width={24}
+            height={24}
+            className="hidden dark:block dark:group-data-[state=expanded]:hidden"
+          />
+          <Image
             src="/uberSKILLS_wattermark_white.svg"
             alt="uberSKILLS"
             width={120}
             height={37}
-            className="block dark:hidden"
+            className="hidden group-data-[state=expanded]:block dark:!hidden"
           />
           <Image
             src="/uberSKILLS_wattermark_black.svg"
             alt="uberSKILLS"
             width={120}
             height={37}
-            className="hidden dark:block"
+            className="hidden dark:group-data-[state=expanded]:block"
           />
         </Link>
       </SidebarHeader>
