@@ -1,7 +1,7 @@
 # uberSKILLS
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-black.svg)](LICENSE)
-[![Build](https://img.shields.io/github/actions/workflow/status/hvasconcelos/uberskills/ci.yml?branch=master)](https://github.com/hvasconcelos/uberskills/actions)
+[![Build](https://img.shields.io/github/actions/workflow/status/uberskillsdev/uberskills/ci.yml?branch=master)](https://github.com/uberskillsdev/uberskills/actions)
 
 **Design, test, and deploy Claude Code Agent Skills through a visual, AI-assisted workflow.**
 
@@ -69,7 +69,7 @@ If you want to contribute or run from source:
 
 ```bash
 # Clone the repository
-git clone https://github.com/hvasconcelos/uberskills.git
+git clone https://github.com/uberskillsdev/uberskills.git
 cd uberskills
 
 # Install dependencies (pnpm is enabled via corepack)

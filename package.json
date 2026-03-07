@@ -1,5 +1,5 @@
 {
-  "name": "uberskills",
+  "name": "@uberskillsdev/uberskills",
   "private": false,
   "bin": {
     "uberskills": "./bin/uberskills.mjs"
@@ -11,12 +11,12 @@
   "author": "Helder Vasconcelos",
   "version": "0.9.1",
   "email": "heldervasc@bearstouch.com",
-  "url": "https://github.com/hvasconcelos",
+  "url": "https://github.com/uberskillsdev",
   "repository": {
     "type": "git",
-    "url": "https://github.com/hvasconcelos/uberskills.git"
+    "url": "https://github.com/uberskillsdev/uberskills.git"
   },
-  "homepage": "https://github.com/hvasconcelos/uberskills",
+  "homepage": "https://github.com/uberskillsdev/uberskills",
   "workspaces": [
     "apps/*",
     "packages/*"

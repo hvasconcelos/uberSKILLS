@@ -41,12 +41,12 @@ const navItems = [
 
 const linkItems = [
   {
-    href: "https://github.com/hvasconcelos/uberskills",
+    href: "https://github.com/uberskillsdev/uberskills",
     label: "GitHub",
     icon: GithubIcon,
   },
   {
-    href: "https://github.com/hvasconcelos/uberskills/issues/new",
+    href: "https://github.com/uberskillsdev/uberskills/issues/new",
     label: "Open an Issue",
     icon: BugIcon,
   },

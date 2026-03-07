@@ -7,7 +7,7 @@ Thank you for your interest in contributing to uberSKILLS! This document provide
 1. **Fork** the repository on GitHub
 2. **Clone** your fork locally:
    ```bash
-   git clone https://github.com/hvasconcelos/uberskills.git
+   git clone https://github.com/uberskillsdev/uberskills.git
    cd uberskills
    ```
 3. **Install dependencies**:
@@ -117,7 +117,7 @@ Order imports as:
 
 ## Reporting Issues
 
-Use [GitHub Issues](https://github.com/hvasconcelos/uberskills/issues) to report bugs or request features. Include:
+Use [GitHub Issues](https://github.com/uberskillsdev/uberskills/issues) to report bugs or request features. Include:
 
 - Steps to reproduce (for bugs)
 - Expected vs actual behavior
