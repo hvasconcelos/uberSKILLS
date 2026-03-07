@@ -1,4 +1,4 @@
-name: Publish uberSKILLS to npm
+name: Release to NPM
 
 on:
   push:
