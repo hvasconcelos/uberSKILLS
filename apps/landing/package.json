@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev --port 3001",
     "build": "next build",
+    "postbuild": "cp -r .next/static .next/standalone/apps/landing/.next/static && cp -r public .next/standalone/apps/landing/public",
     "start": "next start",
     "typecheck": "tsc --noEmit"
   },

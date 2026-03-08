@@ -22,7 +22,7 @@ COPY --from=deps /app/packages/ui/node_modules ./packages/ui/node_modules
 COPY --from=deps /app/packages/skill-engine/node_modules ./packages/skill-engine/node_modules
 COPY --from=deps /app/packages/types/node_modules ./packages/types/node_modules
 COPY . .
-RUN pnpm run build
+RUN pnpm turbo run build --filter=@uberskills/web
 
 # --- runner: minimal production image ---
 FROM node:20-alpine AS runner
