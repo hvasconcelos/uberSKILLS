@@ -1,3 +1,4 @@
+import { FaqSection } from "@/components/landing/faq-section";
 import { FeatureCards } from "@/components/landing/feature-cards";
 import { HeroSection } from "@/components/landing/hero-section";
 import { HowItWorks } from "@/components/landing/how-it-works";
@@ -10,6 +11,7 @@ export default function LandingPage() {
       <HeroSection />
       <FeatureCards />
       <HowItWorks />
+      <FaqSection />
       <SocialProof />
       <LandingFooter />
     </>
