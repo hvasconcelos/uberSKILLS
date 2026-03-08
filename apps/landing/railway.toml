@@ -1,0 +1,11 @@
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "apps/landing/Dockerfile"
+watchPatterns = ["apps/landing/**", "packages/ui/**", "packages/types/**"]
+
+[deploy]
+startCommand = "node apps/landing/server.js"
+healthcheckPath = "/"
+healthcheckTimeout = 60
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 3
