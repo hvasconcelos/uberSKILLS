@@ -58,6 +58,16 @@ export function LandingFooter() {
                   Documentation
                 </a>
               </li>
+              <li>
+                <a
+                  href="https://agentskills.io/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-foreground"
+                >
+                  Agent Skills Standard
+                </a>
+              </li>
             </ul>
           </div>
 

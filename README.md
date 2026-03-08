@@ -9,7 +9,7 @@ uberSKILLS replaces manual `SKILL.md` authoring with a structured editor, multi-
 
 ## What is uberSKILLS?
 
-Creating [Agent Skills](https://docs.anthropic.com/en/docs/claude-code/skills) today is entirely manual -- authors hand-write YAML frontmatter and markdown instructions, with no built-in way to preview, validate, or test a skill before deploying it.
+Creating [Agent Skills](https://agentskills.io/) today is entirely manual -- authors hand-write YAML frontmatter and markdown instructions, with no built-in way to preview, validate, or test a skill before deploying it.
 
 uberSKILLS is an open-source web application that provides an integrated authoring environment purpose-built for the SKILL.md format, with deploy support for Claude Code, OpenAI Codex, OpenClaw, and OpenCode:
 
