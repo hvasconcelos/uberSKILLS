@@ -38,6 +38,7 @@ export function LandingFooter() {
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-1.5 hover:text-foreground"
+                  data-umami-event="footer-github-click"
                 >
                   <GithubIcon className="size-3.5" aria-hidden="true" />
                   GitHub
@@ -49,6 +50,7 @@ export function LandingFooter() {
                   target="_blank"
                   rel="noopener noreferrer"
                   className="hover:text-foreground"
+                  data-umami-event="footer-npm-click"
                 >
                   npm
                 </a>
@@ -59,6 +61,7 @@ export function LandingFooter() {
                   target="_blank"
                   rel="noopener noreferrer"
                   className="hover:text-foreground"
+                  data-umami-event="footer-docs-click"
                 >
                   Documentation
                 </a>
@@ -69,6 +72,7 @@ export function LandingFooter() {
                   target="_blank"
                   rel="noopener noreferrer"
                   className="hover:text-foreground"
+                  data-umami-event="footer-agentskills-click"
                 >
                   Agent Skills Standard
                 </a>

@@ -38,6 +38,7 @@ export function LandingNav() {
               target="_blank"
               rel="noopener noreferrer"
               aria-label="GitHub"
+              data-umami-event="nav-github-click"
             >
               <GithubIcon className="size-5" aria-hidden="true" />
             </a>
@@ -47,6 +48,7 @@ export function LandingNav() {
             size="icon"
             onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
             aria-label="Toggle theme"
+            data-umami-event="nav-theme-toggle"
           >
             <SunIcon className="size-5 dark:hidden" aria-hidden="true" />
             <MoonIcon className="hidden size-5 dark:block" aria-hidden="true" />

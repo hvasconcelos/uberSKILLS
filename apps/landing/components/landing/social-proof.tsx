@@ -8,7 +8,7 @@ import { InstallCommand } from "./install-command";
 
 export function SocialProof() {
   const [stars, setStars] = useState<number | null>(null);
-  const { ref, inView } = useInView({ threshold: 0.2 });
+  const { ref, inView } = useInView({ threshold: 0.2, umamiEvent: "section-social-proof-view" });
 
   useEffect(() => {
     fetch("https://api.github.com/repos/uberskillsdev/uberskills")
@@ -47,6 +47,7 @@ export function SocialProof() {
               href="https://github.com/uberskillsdev/uberskills"
               target="_blank"
               rel="noopener noreferrer"
+              data-umami-event="social-github-click"
             >
               <GithubIcon className="size-4" aria-hidden="true" />
               {stars !== null ? (

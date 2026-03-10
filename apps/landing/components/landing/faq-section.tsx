@@ -58,7 +58,7 @@ const faqs = [
 ] as const;
 
 export function FaqSection() {
-  const { ref, inView } = useInView({ threshold: 0.1 });
+  const { ref, inView } = useInView({ threshold: 0.1, umamiEvent: "section-faq-view" });
   const [openIndex, setOpenIndex] = useState<number | null>(null);
 
   const toggle = (index: number) => {
@@ -86,6 +86,7 @@ export function FaqSection() {
                 onClick={() => toggle(i)}
                 className="flex w-full items-center justify-between py-4 text-left font-medium transition-colors hover:text-primary"
                 aria-expanded={openIndex === i}
+                data-umami-event={`faq-toggle-${i}`}
               >
                 {faq.question}
                 <ChevronDown

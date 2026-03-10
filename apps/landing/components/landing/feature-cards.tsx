@@ -53,7 +53,7 @@ const features = [
 ] as const;
 
 export function FeatureCards() {
-  const { ref, inView } = useInView({ threshold: 0.15 });
+  const { ref, inView } = useInView({ threshold: 0.15, umamiEvent: "section-features-view" });
 
   return (
     <section className="border-t py-16 md:py-24" ref={ref}>

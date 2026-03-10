@@ -31,6 +31,7 @@ export function InstallCommand() {
         className="size-7"
         onClick={copy}
         aria-label={copied ? "Copied" : "Copy install command"}
+        data-umami-event="copy-install-command"
       >
         {copied ? (
           <CheckIcon className="size-3.5" aria-hidden="true" />

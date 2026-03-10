@@ -24,7 +24,7 @@ const steps = [
 ] as const;
 
 export function HowItWorks() {
-  const { ref, inView } = useInView({ threshold: 0.15 });
+  const { ref, inView } = useInView({ threshold: 0.15, umamiEvent: "section-how-it-works-view" });
 
   return (
     <section className="py-8 md:py-12" ref={ref}>

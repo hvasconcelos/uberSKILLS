@@ -1,10 +1,12 @@
 import { Badge, Button } from "@uberskills/ui";
 import { GithubIcon } from "lucide-react";
 import { InstallCommand } from "./install-command";
+import { SectionTracker } from "./section-tracker";
 
 export function HeroSection() {
   return (
     <section className="relative overflow-hidden py-20 md:py-32">
+      <SectionTracker event="section-hero-view" />
       {/* Dot grid background */}
       <div
         className="dot-grid pointer-events-none absolute inset-0 opacity-50"
@@ -49,6 +51,7 @@ export function HeroSection() {
               href="https://github.com/uberskillsdev/uberskills"
               target="_blank"
               rel="noopener noreferrer"
+              data-umami-event="hero-github-click"
             >
               <GithubIcon className="size-4" aria-hidden="true" />
               View on GitHub
