@@ -2,6 +2,7 @@
 
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@uberskills/ui";
 import { AppSidebar } from "@/components/app-sidebar";
+import { WelcomeModal } from "@/components/welcome-modal";
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -15,6 +16,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
         <footer className="border-t px-6 py-4 text-center text-sm text-muted-foreground">
           © {new Date().getFullYear()} Made with ❤️ by Hélder Vasconcelos
         </footer>
+        <WelcomeModal />
       </SidebarInset>
     </SidebarProvider>
   );
