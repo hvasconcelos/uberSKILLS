@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.8] - 2026-03-13
+
+### Added
+
+- **Deploy Targets**
+  - Added deploy targets for Antigravity, Cursor, Gemini CLI, GitHub Copilot, and Windsurf — now supports 8 agent tools with correct filesystem paths
+
+- **Import**
+  - Inline import results card replacing the results dialog
+  - Agent selector dropdown for directory scanning on the import page
+  - Tilde expansion and symlink support in the skill importer
+  - Filter out skills without names during import
+
+### Changed
+
+- Updated supported agents list across landing page, README, FAQ, feature cards, how-it-works, meta descriptions, JSON-LD structured data, and in-app documentation
+- Replaced removed OpenClaw target and corrected Codex path to `~/.agents/skills/`
+
 ## [0.9.7] - 2026-03-13
 
 ### Added
@@ -237,6 +255,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Consistent padding on instructions tab content
 - Tab content max-width adjusted for balanced padding
 
+[0.9.8]: https://github.com/uberskillsdev/uberskills/releases/tag/v0.9.8
 [0.9.7]: https://github.com/uberskillsdev/uberskills/releases/tag/v0.9.7
 [0.9.6]: https://github.com/uberskillsdev/uberskills/releases/tag/v0.9.6
 [0.9.5]: https://github.com/uberskillsdev/uberskills/releases/tag/v0.9.5
