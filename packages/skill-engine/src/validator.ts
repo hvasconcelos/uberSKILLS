@@ -1,7 +1,7 @@
 import type { SkillFrontmatter, ValidationError } from "@uberskills/types";
 
 const MAX_NAME_LENGTH = 100;
-const MAX_DESCRIPTION_LENGTH = 1024;
+const MAX_DESCRIPTION_LENGTH = 500;
 const MIN_CONTENT_LENGTH = 50;
 
 const KEBAB_CASE_PATTERN = /^[a-z0-9]+(-[a-z0-9]+)*$/;

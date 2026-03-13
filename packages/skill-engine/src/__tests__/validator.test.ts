@@ -145,8 +145,8 @@ describe("validateSkill", () => {
     );
   });
 
-  it("fails when description exceeds 1024 characters", () => {
-    const fm: SkillFrontmatter = { ...validFrontmatter, description: "B".repeat(1025) };
+  it("fails when description exceeds 500 characters", () => {
+    const fm: SkillFrontmatter = { ...validFrontmatter, description: "B".repeat(501) };
     const result = validateSkill(fm, validContent);
 
     expect(result.valid).toBe(false);
@@ -155,10 +155,10 @@ describe("validateSkill", () => {
     );
   });
 
-  it("passes when description is exactly 1024 characters", () => {
+  it("passes when description is exactly 500 characters", () => {
     const fm: SkillFrontmatter = {
       ...validFrontmatter,
-      description: `Use when ${"B".repeat(1015)}`,
+      description: `Use when ${"B".repeat(491)}`,
     };
     const result = validateSkill(fm, validContent);
 
