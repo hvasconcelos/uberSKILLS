@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.9] - 2026-03-17
+
+### Changed
+
+- **AI Skill Creation**
+  - Switched AI output format from YAML frontmatter to structured JSON code block with explicit required fields (`name`, `description`, `trigger`, `content`), making skill generation more consistent and reliable
+  - Enforced stricter metadata constraints in system prompt: name ≤ 100 chars, description ≤ 500 chars
+  - Reduced `MAX_DESCRIPTION_LENGTH` from 1024 to 500 characters in the skill validator
+
+### Fixed
+
+- Resolved issue where skill name was sometimes missing from AI-generated output, preventing the preview panel from parsing the skill
+- Fixed lint issues in documentation page
+
 ## [0.9.8] - 2026-03-13
 
 ### Added
@@ -255,6 +269,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Consistent padding on instructions tab content
 - Tab content max-width adjusted for balanced padding
 
+[0.9.9]: https://github.com/uberskillsdev/uberskills/releases/tag/v0.9.9
 [0.9.8]: https://github.com/uberskillsdev/uberskills/releases/tag/v0.9.8
 [0.9.7]: https://github.com/uberskillsdev/uberskills/releases/tag/v0.9.7
 [0.9.6]: https://github.com/uberskillsdev/uberskills/releases/tag/v0.9.6
