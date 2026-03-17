@@ -46,7 +46,7 @@ export function LandingFooter() {
               </li>
               <li>
                 <a
-                  href="https://www.npmjs.com/package/uberskills"
+                  href="https://www.npmjs.com/package/@uberskillsdev/uberskills"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="hover:text-foreground"

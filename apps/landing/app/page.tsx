@@ -1,3 +1,4 @@
+import { ChangelogSection } from "@/components/landing/changelog-section";
 import { FaqSection } from "@/components/landing/faq-section";
 import { FeatureCards } from "@/components/landing/feature-cards";
 import { HeroSection } from "@/components/landing/hero-section";
@@ -26,7 +27,7 @@ const jsonLd = {
       offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
       license: "https://opensource.org/licenses/MIT",
       url: SITE_URL,
-      downloadUrl: "https://www.npmjs.com/package/uberskills",
+      downloadUrl: "https://www.npmjs.com/package/@uberskillsdev/uberskills",
       softwareVersion: "latest",
       screenshot: `${SITE_URL}/uberskills-opengraph.png`,
       sourceOrganization: {
@@ -147,6 +148,7 @@ export default function LandingPage() {
         <FeatureCards />
         <HowItWorks />
         <FaqSection />
+        <ChangelogSection />
         <SocialProof />
         <LandingFooter />
       </main>
