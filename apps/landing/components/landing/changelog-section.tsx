@@ -4,12 +4,12 @@ import { useInView } from "@/hooks/use-in-view";
 
 const releases = [
   {
-    version: "0.9.9",
+    version: "0.10.0",
     date: "2026-03-17",
     changes: [
-      "Switched AI output to structured JSON for more reliable skill generation",
-      "Enforced stricter metadata constraints (name and description limits)",
-      "Fixed missing skill name in AI-generated output",
+      "Multi-turn conversation support in the test sandbox — send follow-up messages within a single test run",
+      "Per-turn metrics and cumulative totals with a new Turns column in test history",
+      "Structured JSON output for more reliable AI skill generation",
     ],
   },
   {
