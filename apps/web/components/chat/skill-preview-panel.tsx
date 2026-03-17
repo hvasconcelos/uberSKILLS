@@ -1,13 +1,60 @@
 "use client";
 
 import { parseSkillMd, validateSkill } from "@uberskills/skill-engine";
-import type { Skill, ValidationError } from "@uberskills/types";
+import type { Skill, SkillFrontmatter, ValidationError } from "@uberskills/types";
 import { Button, Input } from "@uberskills/ui";
 import type { UIMessage } from "ai";
 import { AlertCircle, AlertTriangle, Check, Copy, Loader2, RefreshCw, Save } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
+
+/** Shape of the JSON block the AI is instructed to produce. */
+interface SkillJsonOutput {
+  name: string;
+  description: string;
+  trigger: string;
+  model_pattern?: string | null;
+  content: string;
+}
+
+/**
+ * Try to extract and parse a ```json code block from the assistant's text.
+ * Returns null when no valid JSON block is found.
+ */
+function extractSkillJson(text: string): SkillJsonOutput | null {
+  // Match ```json ... ``` code blocks (greedy so we get the largest one)
+  const jsonBlockRe = /```json\s*\n([\s\S]*?)\n```/;
+  const match = jsonBlockRe.exec(text);
+  if (!match?.[1]) return null;
+
+  try {
+    const parsed: unknown = JSON.parse(match[1]);
+    if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) return null;
+
+    const obj = parsed as Record<string, unknown>;
+
+    // Require the mandatory fields to be non-empty strings
+    if (
+      typeof obj.name !== "string" ||
+      typeof obj.description !== "string" ||
+      typeof obj.trigger !== "string" ||
+      typeof obj.content !== "string"
+    ) {
+      return null;
+    }
+
+    return {
+      name: obj.name,
+      description: obj.description,
+      trigger: obj.trigger,
+      model_pattern: typeof obj.model_pattern === "string" ? obj.model_pattern : null,
+      content: obj.content,
+    };
+  } catch {
+    return null;
+  }
+}
 
 interface SkillPreviewPanelProps {
   messages: UIMessage[];
@@ -38,41 +85,51 @@ export function SkillPreviewPanel({ messages, isStreaming, onRegenerate }: Skill
       .join("");
   }, [messages]);
 
-  /** Extract SKILL.md content from markdown code blocks if present. */
-  const skillMdText = useMemo(() => {
-    if (!lastAssistantText) return "";
-    // Match ```md, ```markdown, or plain ``` code blocks containing frontmatter.
-    // The second [\s\S]* is greedy so it skips over inner code fences (e.g. code
-    // examples) and backtracks to the *last* closing ``` on its own line.
-    const codeBlockMatch = /```(?:md|markdown)?\s*\n(---[\s\S]*?---[\s\S]*)\n```/.exec(
-      lastAssistantText,
-    );
-    if (codeBlockMatch?.[1]) return codeBlockMatch[1].trim();
-    return lastAssistantText;
-  }, [lastAssistantText]);
-
   // Only parse when streaming has finished to avoid partial/broken parses
-  const [stableSkillMdText, setStableSkillMdText] = useState("");
+  const [stableText, setStableText] = useState("");
 
   useEffect(() => {
-    if (!isStreaming && skillMdText) {
-      setStableSkillMdText(skillMdText);
+    if (!isStreaming && lastAssistantText) {
+      setStableText(lastAssistantText);
     }
-  }, [isStreaming, skillMdText]);
+  }, [isStreaming, lastAssistantText]);
 
   const { frontmatter, content, errors, hasFrontmatter } = useMemo(() => {
-    if (!stableSkillMdText) {
+    if (!stableText) {
       return {
-        frontmatter: { name: "", description: "", trigger: "" },
+        frontmatter: { name: "", description: "", trigger: "" } as SkillFrontmatter,
         content: "",
         errors: [] as ValidationError[],
         hasFrontmatter: false,
       };
     }
 
-    const parsed = parseSkillMd(stableSkillMdText);
+    // Try JSON extraction first (preferred, more reliable)
+    const jsonResult = extractSkillJson(stableText);
+    if (jsonResult) {
+      const fm: SkillFrontmatter = {
+        name: jsonResult.name,
+        description: jsonResult.description,
+        trigger: jsonResult.trigger,
+      };
+      if (jsonResult.model_pattern) {
+        fm.model_pattern = jsonResult.model_pattern;
+      }
+      const validation = validateSkill(fm, jsonResult.content);
+      return {
+        frontmatter: fm,
+        content: jsonResult.content,
+        errors: validation.errors,
+        hasFrontmatter: true,
+      };
+    }
+
+    // Fallback: try SKILL.md frontmatter parsing (for backward compatibility)
+    const codeBlockMatch = /```(?:md|markdown)?\s*\n(---[\s\S]*?---[\s\S]*)\n```/.exec(stableText);
+    const skillMdText = codeBlockMatch?.[1]?.trim() ?? stableText;
+
+    const parsed = parseSkillMd(skillMdText);
     const validation = validateSkill(parsed.frontmatter, parsed.content);
-    // Consider frontmatter detected if parser extracted a non-empty name
     const detected = parsed.frontmatter.name.length > 0;
 
     return {
@@ -81,7 +138,7 @@ export function SkillPreviewPanel({ messages, isStreaming, onRegenerate }: Skill
       errors: validation.errors,
       hasFrontmatter: detected,
     };
-  }, [stableSkillMdText]);
+  }, [stableText]);
 
   // Auto-fill name from parsed frontmatter when it changes
   useEffect(() => {
@@ -93,6 +150,22 @@ export function SkillPreviewPanel({ messages, isStreaming, onRegenerate }: Skill
   const validationErrors = errors.filter((e) => e.severity === "error");
   const validationWarnings = errors.filter((e) => e.severity === "warning");
   const canSave = nameOverride.trim().length > 0 && hasFrontmatter && !isStreaming;
+
+  /** Reconstruct a SKILL.md string for the clipboard. */
+  const skillMdText = useMemo(() => {
+    if (!hasFrontmatter) return stableText;
+    const yamlLines = [
+      `---`,
+      `name: "${frontmatter.name}"`,
+      `description: "${frontmatter.description}"`,
+      `trigger: "${frontmatter.trigger}"`,
+    ];
+    if (frontmatter.model_pattern) {
+      yamlLines.push(`model_pattern: "${frontmatter.model_pattern}"`);
+    }
+    yamlLines.push(`---`, "", content);
+    return yamlLines.join("\n");
+  }, [hasFrontmatter, frontmatter, content, stableText]);
 
   const handleCopy = useCallback(async () => {
     try {
@@ -296,7 +369,7 @@ export function SkillPreviewPanel({ messages, isStreaming, onRegenerate }: Skill
                 <span>Could not parse SKILL.md frontmatter. Showing raw output.</span>
               </div>
               <pre className="whitespace-pre-wrap break-words rounded-md border border-border bg-muted/50 p-3 font-mono text-xs leading-relaxed">
-                {skillMdText}
+                {stableText}
               </pre>
             </div>
           )}
