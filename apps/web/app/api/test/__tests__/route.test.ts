@@ -307,7 +307,7 @@ describe("POST /api/test", () => {
       }),
     );
 
-    expect(mockModelFn).toHaveBeenCalledWith("anthropic/claude-sonnet-4");
+    expect(mockModelFn).toHaveBeenCalledWith("anthropic/claude-sonnet-4", undefined);
 
     // Verify test run ID is exposed via header
     expect(response.headers.get("X-Test-Run-Id")).toBe("tr-abc");

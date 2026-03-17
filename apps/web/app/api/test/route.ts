@@ -20,6 +20,7 @@ interface TestRequestBody {
   model: string;
   userMessage: string;
   arguments?: Record<string, string>;
+  enableWebSearch?: boolean;
 }
 
 /**
@@ -60,7 +61,7 @@ export async function POST(request: Request): Promise<Response> {
     return NextResponse.json({ error: "Invalid JSON body", code: "INVALID_JSON" }, { status: 400 });
   }
 
-  const { skillId, model, userMessage, arguments: args } = body;
+  const { skillId, model, userMessage, arguments: args, enableWebSearch } = body;
 
   if (typeof skillId !== "string" || skillId.trim() === "") {
     return NextResponse.json(
@@ -141,7 +142,7 @@ export async function POST(request: Request): Promise<Response> {
 
   try {
     const result = streamText({
-      model: openrouter(model),
+      model: openrouter(model, enableWebSearch ? { web_search_options: { max_results: 5 } } : undefined),
       system: systemPrompt,
       messages: [{ role: "user", content: userMessage }],
       // Capture time-to-first-token on the first chunk

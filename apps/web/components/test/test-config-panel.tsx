@@ -3,6 +3,7 @@
 import { detectPlaceholders, substitute } from "@uberskills/skill-engine";
 import {
   Button,
+  Checkbox,
   Dialog,
   DialogContent,
   DialogDescription,
@@ -65,6 +66,7 @@ export function TestConfigPanel({
   const [selectedModel, setSelectedModel] = useState(defaultModel);
   const [userMessage, setUserMessage] = useState("");
   const [argValues, setArgValues] = useState<Record<string, string>>({});
+  const [enableWebSearch, setEnableWebSearch] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Detect $VARIABLE_NAME placeholders in skill content
@@ -93,6 +95,7 @@ export function TestConfigPanel({
           userMessage: userMessage.trim(),
           // Only include arguments when the skill has placeholders to substitute
           arguments: placeholders.length > 0 ? argValues : undefined,
+          enableWebSearch,
         }),
       });
 
@@ -118,7 +121,7 @@ export function TestConfigPanel({
     } finally {
       setIsSubmitting(false);
     }
-  }, [canRun, skill.id, selectedModel, userMessage, argValues, placeholders.length, onTestStart]);
+  }, [canRun, skill.id, selectedModel, userMessage, argValues, placeholders.length, enableWebSearch, onTestStart]);
 
   // Early return: prompt the user to configure an API key before testing
   if (!hasApiKey) {
@@ -204,6 +207,24 @@ export function TestConfigPanel({
               {skill.fileCount} bundled file(s) will be included via progressive disclosure.
             </p>
           )}
+        </div>
+
+        {/* Web search toggle */}
+        <div className="space-y-1.5">
+          <div className="flex items-center gap-2">
+            <Checkbox
+              id="enable-web-search"
+              checked={enableWebSearch}
+              onCheckedChange={(checked) => setEnableWebSearch(checked === true)}
+              disabled={isBusy}
+            />
+            <Label htmlFor="enable-web-search" className="text-sm font-medium">
+              Enable Web Search
+            </Label>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Allow the model to search the web during this test run.
+          </p>
         </div>
 
         {/* Argument inputs for detected placeholders */}
