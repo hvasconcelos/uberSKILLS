@@ -19,11 +19,13 @@ const UBERSKILLS_HOME = join(homedir(), ".uberskills"); // Where all binaries, d
 const APP_DIR = join(UBERSKILLS_HOME, "app"); // Cloned app location
 const VERSION_FILE = join(UBERSKILLS_HOME, ".version"); // File to store installed version
 const PNPM_VERSION = "9.15.4"; // Explicit pnpm version for reproducible installs
+const isWindows = process.platform === "win32"; // Windows requires cmd.exe instead of sh
 
 // Run a command asynchronously with suppressed output. Resolves on success, rejects with stderr.
 function runQuiet(cmd, opts = {}) {
   return new Promise((resolve, reject) => {
-    const child = spawn("sh", ["-c", cmd], { stdio: "pipe", ...opts });
+    const [shell, shellFlag] = isWindows ? ["cmd.exe", "/c"] : ["sh", "-c"];
+    const child = spawn(shell, [shellFlag, cmd], { stdio: "pipe", ...opts });
     let stderr = "";
     child.stderr.on("data", (chunk) => {
       stderr += chunk.toString();
@@ -187,7 +189,7 @@ async function ensureInstalled(reset) {
   });
 
   await step("Installing dependencies...", "Dependencies installed", () =>
-    runQuiet("pnpm install --frozen-lockfile", { cwd: APP_DIR }),
+    runQuiet(`pnpm install --frozen-lockfile${isWindows ? " --shamefully-hoist" : ""}`, { cwd: APP_DIR }),
   );
 
   await step("Building application...", "Application built", () =>
@@ -279,7 +281,9 @@ function startServer(port, host, dataDir, encryptionSecret, debug) {
   };
 
   process.on("SIGINT", shutdown);
-  process.on("SIGTERM", shutdown);
+  if (!isWindows) {
+    process.on("SIGTERM", shutdown);
+  }
 }
 
 // ---
