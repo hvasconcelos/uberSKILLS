@@ -13,8 +13,11 @@ export function generateSkillMd(frontmatter: SkillFrontmatter, content: string):
   const yamlData: Record<string, string> = {
     name: frontmatter.name,
     description: frontmatter.description,
-    trigger: frontmatter.trigger,
   };
+
+  if (frontmatter.trigger) {
+    yamlData.trigger = frontmatter.trigger;
+  }
 
   if (frontmatter.model_pattern != null && frontmatter.model_pattern !== "") {
     yamlData.model_pattern = frontmatter.model_pattern;

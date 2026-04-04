@@ -19,7 +19,7 @@ export type FileType = "script" | "reference";
 export interface SkillFrontmatter {
   name: string;
   description: string;
-  trigger: string;
+  trigger?: string;
   model_pattern?: string;
 }
 

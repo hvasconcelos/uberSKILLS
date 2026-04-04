@@ -158,7 +158,7 @@ export function SkillPreviewPanel({ messages, isStreaming, onRegenerate }: Skill
       `---`,
       `name: "${frontmatter.name}"`,
       `description: "${frontmatter.description}"`,
-      `trigger: "${frontmatter.trigger}"`,
+      `trigger: "${frontmatter.trigger ?? ""}"`,
     ];
     if (frontmatter.model_pattern) {
       yamlLines.push(`model_pattern: "${frontmatter.model_pattern}"`);
@@ -187,7 +187,7 @@ export function SkillPreviewPanel({ messages, isStreaming, onRegenerate }: Skill
         body: JSON.stringify({
           name: nameOverride.trim() || frontmatter.name,
           description: frontmatter.description,
-          trigger: frontmatter.trigger,
+          trigger: frontmatter.trigger ?? "",
           modelPattern: frontmatter.model_pattern ?? null,
           content,
           tags: [],
@@ -350,7 +350,7 @@ export function SkillPreviewPanel({ messages, isStreaming, onRegenerate }: Skill
                 <dl className="space-y-2 text-sm">
                   <FrontmatterField label="Name" value={frontmatter.name} />
                   <FrontmatterField label="Description" value={frontmatter.description} />
-                  <FrontmatterField label="Trigger" value={frontmatter.trigger} />
+                  <FrontmatterField label="Trigger" value={frontmatter.trigger ?? ""} />
                   {frontmatter.model_pattern && (
                     <FrontmatterField
                       label="Model Pattern"

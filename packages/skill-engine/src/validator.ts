@@ -126,8 +126,12 @@ export function validateSkill(frontmatter: SkillFrontmatter, content: string): V
   }
 
   if (isBlank(frontmatter.trigger)) {
-    errors.push({ field: "trigger", message: "Trigger is required.", severity: "error" });
-  } else if (XML_BRACKETS_PATTERN.test(frontmatter.trigger)) {
+    errors.push({
+      field: "trigger",
+      message: "Trigger is recommended for better skill discovery.",
+      severity: "warning",
+    });
+  } else if (XML_BRACKETS_PATTERN.test(frontmatter.trigger!)) {
     errors.push({
       field: "trigger",
       message: "Frontmatter fields must not contain XML angle brackets.",
