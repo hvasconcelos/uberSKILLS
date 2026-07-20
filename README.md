@@ -60,7 +60,10 @@ Your data is stored at `~/.uberskills/data/` and persists across runs.
 
 ### Prerequisites
 
-- **Node.js** >= 20
+- **Node.js** 20.x–25.x (Node 26+ is not yet supported — `better-sqlite3` has no
+  prebuilt binary for its ABI). The repo's `.npmrc` pins the version pnpm uses
+  (`use-node-version=22.23.1`), so pnpm auto-downloads and runs on a compatible
+  Node regardless of your system default. An `.nvmrc` is also provided for nvm users.
 - **git** — available in PATH
 
 ### Development Setup
